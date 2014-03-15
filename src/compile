@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -d ../bin/classes ]; then
+	rm -r ../bin/classes
+fi
+
+if [ -f ../bin/scalasca.jar ]; then
+	rm -r ../bin/scalasca.jar
+fi
+
+mkdir ../bin/classes
+fsc -d ../bin/classes scalasca/core/ScalaSCA.scala scalasca/tests/standalone/DoubleEquals.scala
+cp scalac-plugin.xml ../bin/classes
+cd ../bin/classes
+jar cf ../scalasca.jar .

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+scalac -Xplugin:../bin/scalasca.jar scalasca/tests/standalone/$1

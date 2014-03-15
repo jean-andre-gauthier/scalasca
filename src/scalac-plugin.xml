@@ -1,0 +1,4 @@
+<plugin>
+  <name>scalasca.core</name>
+  <classname>scalasca.core.ScalaSCA</classname>
+</plugin>
