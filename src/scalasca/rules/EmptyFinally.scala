@@ -16,18 +16,21 @@
  *  */
  ******************************************************************************/
 
-package scalasca.tests.standalone
+package scalasca.rules
 
-import akka.actor.Actor
-import akka.event.Logging
+import scalasca.core._
+import scala.tools.nsc._
 
-class PublicMutable extends Actor{
+case class EmptyFinallyNodes(nodes: List[Global#Position]) extends RuleResult
 
-	val myValue = "my value"
+object EmptyFinally extends Global(new Settings()) with Rule {
 
-	val log = Logging(context.system, this)
-	def receive = {
-		case "test" => log.info("received test")
-		case _ => log.info("received unknown message")
+	override def failureMessage = "Empty finally block"
+	override def name = "Empty Finally"
+
+	override def apply(syntaxTree: Global#Tree, computedResults: List[RuleResult]): (Global#Tree, List[RuleResult]) = {
+		val emptyFinallys = for ( tree @ Try(block, catches, Literal(Constant(()))) <- syntaxTree) yield (tree.pos)
+		emptyFinallys.foreach(pos => showRuleFailure(pos))
+		(syntaxTree, EmptyFinallyNodes(emptyFinallys) :: computedResults)
 	}
 }

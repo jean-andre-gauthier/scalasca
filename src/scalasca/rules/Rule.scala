@@ -16,18 +16,24 @@
  *  */
  ******************************************************************************/
 
-package scalasca.tests.standalone
+package scalasca.rules
 
-import akka.actor.Actor
-import akka.event.Logging
+import scalasca.core._
+import scala.tools.nsc.Global
+import scala.tools.nsc.Global._
 
-class PublicMutable extends Actor{
+trait Rule {
 
-	val myValue = "my value"
+	def fatal: Boolean = false
+	def failureMessage: String
+	def name: String
 
-	val log = Logging(context.system, this)
-	def receive = {
-		case "test" => log.info("received test")
-		case _ => log.info("received unknown message")
+	def showRuleFailure(position: Global#Position) = {
+		if (fatal)
+			Console.err.println(position.showError(failureMessage))
+		else
+			Console.println(position.showError(failureMessage))
 	}
+
+	def apply(syntaxTree: Global#Tree, computedResults: List[RuleResult]): (Global#Tree, List[RuleResult])
 }

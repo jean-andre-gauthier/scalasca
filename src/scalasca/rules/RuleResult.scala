@@ -16,18 +16,14 @@
  *  */
  ******************************************************************************/
 
-package scalasca.tests.standalone
+package scalasca.rules
 
-import akka.actor.Actor
-import akka.event.Logging
+import scala.reflect.internal.Trees
+import scala.reflect.runtime.universe._
 
-class PublicMutable extends Actor{
+abstract class RuleResult
+case class SyntaxTree(tree: Trees) extends RuleResult
 
-	val myValue = "my value"
-
-	val log = Logging(context.system, this)
-	def receive = {
-		case "test" => log.info("received test")
-		case _ => log.info("received unknown message")
-	}
-}
+//TODO Precise specification
+case class VariableIntervals() extends RuleResult
+case class ControlFlowGraph() extends RuleResult

@@ -1,9 +1,28 @@
+/*******************************************************************************
+ * /**
+ *  *  _____           _       _____ _____   ___
+ *  * /  ___|         | |     /  ___/  __ \ / _ \
+ *  * \ `--.  ___ __ _| | __ _\ `--.| /  \// /_\ \
+ *  *  `--. \/ __/ _` | |/ _` |`--. \ |    |  _  |
+ *  * /\__/ / (_| (_| | | (_| /\__/ / \__/\| | | |
+ *  * \____/ \___\__,_|_|\__,_\____/ \____/\_| |_/
+ *  *
+ *  * Static Code Analyser for Scala.
+ *  * (c) 2014, LARA/EPFL, Typesafe
+ *  *
+ *  * Author: Jean Andre GAUTHIER
+ *  * Supervisors: Dr. Viktor KUNCAK, Iulian DRAGOS
+ *  *
+ *  */
+ ******************************************************************************/
+
 package scalasca.tests.standalone
 
-object ZeroDiv {
+class ZeroDiv {
   val five = 5
   val amount = five / 0
   def main(args: Array[String]) {
     println(amount)
+
   }
 }
