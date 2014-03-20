@@ -17,20 +17,15 @@ package scalasca.rules
 import scalasca.core._
 import scala.tools.nsc._
 
-case class EmptyFinallyNodes(nodes: List[Global#Position]) extends RuleResult {
-
-	override def warning = Warning("Empty Finally", "Empty finally block")
-
-	override def toString: String = nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.toString))
-}
-
-class EmptyFinally[T <: Global](implicit global: T) extends Rule[T]()(global) {
+class DefaultRule[T <: Global](implicit global: T) extends Rule[T]()(global) {
 
 	import global._
 
-	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): EmptyFinallyNodes = {
+	def apply(syntaxTree: Tree, computedResults: List[RuleResult] = List[RuleResult]()): NoResult = {
 
-		val emptyFinallys = for ( tree @ Try(block, catches, Literal(Constant(()))) <- syntaxTree) yield (tree.pos)
-		EmptyFinallyNodes(emptyFinallys)
+		val divByZero = (new DivisionByZero[global.type]()(global)).apply(syntaxTree, computedResults)
+		val emptyFinallys = (new EmptyFinally[global.type]()(global)).apply(syntaxTree, computedResults)
+		(new ShowWarnings[global.type]()(global)).apply(syntaxTree, List(divByZero, emptyFinallys))
+		NoResult()
 	}
 }

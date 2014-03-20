@@ -1,21 +1,17 @@
 /*******************************************************************************
- * /**
- *  *  _____           _       _____ _____   ___
- *  * /  ___|         | |     /  ___/  __ \ / _ \
- *  * \ `--.  ___ __ _| | __ _\ `--.| /  \// /_\ \
- *  *  `--. \/ __/ _` | |/ _` |`--. \ |    |  _  |
- *  * /\__/ / (_| (_| | | (_| /\__/ / \__/\| | | |
- *  * \____/ \___\__,_|_|\__,_\____/ \____/\_| |_/
- *  *
- *  * Static Code Analyser for Scala.
- *  * (c) 2014, LARA/EPFL, Typesafe
- *  *
- *  * Author: Jean Andre GAUTHIER
- *  * Supervisors: Dr. Viktor KUNCAK, Iulian DRAGOS
- *  *
- *  */
+ *  _____           _       _____ _____   ___
+ * /  ___|         | |     /  ___/  __ \ / _ \
+ * \ `--.  ___ __ _| | __ _\ `--.| /  \// /_\ \
+ *  `--. \/ __/ _` | |/ _` |`--. \ |    |  _  |
+ * /\__/ / (_| (_| | | (_| /\__/ / \__/\| | | |
+ * \____/ \___\__,_|_|\__,_\____/ \____/\_| |_/
+ *
+ * Static Code Analyser for Scala.
+ * (c) 2014, LARA/EPFL, Typesafe
+ *
+ * Author: Jean Andre GAUTHIER
+ * Supervisors: Dr. Viktor KUNCAK, Iulian DRAGOS
  ******************************************************************************/
-
 package scalasca.core
 
 import scalasca.rules._
@@ -26,8 +22,12 @@ import nsc.plugins.Plugin
 import nsc.plugins.PluginComponent
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.Flag._
+import scala.tools.nsc.Settings
+
 
 class ScalaSCA(val global: Global) extends Plugin {
+
+	type Global = ScalaSCA.this.global.type
 	import global._
 
 	val name = "scalasca"
@@ -35,7 +35,7 @@ class ScalaSCA(val global: Global) extends Plugin {
 	val components = List[PluginComponent](Component)
 
 	private object Component extends PluginComponent {
-		val global: ScalaSCA.this.global.type = ScalaSCA.this.global
+		val global: Global = ScalaSCA.this.global
 		val runsAfter = List[String]("refchecks");
 		val phaseName = ScalaSCA.this.name
 		def newPhase(_prev: Phase) = new SCAPhase(_prev)
@@ -46,7 +46,8 @@ class ScalaSCA(val global: Global) extends Plugin {
 
 			def apply(unit: CompilationUnit) {
 				this.unit = unit
-				val (syntaxTree, result) = (EmptyFinally.apply _).tupled(DivisionByZero(unit.body, List[RuleResult]()))
+
+				val result = new DefaultRule()(global).apply(unit.body)
 			}
 		}
 	}
