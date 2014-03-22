@@ -20,5 +20,8 @@ class ZeroDiv {
   def main(args: Array[String]) {
     println(amount)
     if (five == 6) { println("7") } else { println("8") }
+    val myVal1 = 40
+    val myVal2 = 2 + myVal1
+    println(myVal1)
   }
 }

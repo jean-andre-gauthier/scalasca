@@ -25,7 +25,8 @@ class DefaultRule[T <: Global](implicit global: T) extends Rule[T]()(global) {
 
 		val divByZero = (new DivisionByZero[global.type]()(global)).apply(syntaxTree, computedResults)
 		val emptyFinallys = (new EmptyFinally[global.type]()(global)).apply(syntaxTree, computedResults)
-		(new ShowWarnings[global.type]()(global)).apply(syntaxTree, List(divByZero, emptyFinallys))
+		val constProp = (new BlockConstantPropagation[global.type]()(global)).apply(syntaxTree, computedResults)
+		(new ShowWarnings[global.type]()(global)).apply(syntaxTree, List(divByZero, emptyFinallys, constProp))
 		NoResult()
 	}
 }
