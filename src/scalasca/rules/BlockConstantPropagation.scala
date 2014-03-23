@@ -2,6 +2,7 @@ package scalasca.rules
 
 import scalasca.core._
 import scala.tools.nsc._
+import reflect.runtime.universe._
 
 case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree) extends RuleResult {
 
@@ -93,20 +94,41 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 					variables.removeBlockLevel
 					Block(newStats, newExpr)
 				}
+//				//Block return value
+//				case Apply(fun, args) => {
+//
+//				}
 				//Constant val literal
-				case constantVal @ ValDef(mods, name, tpt, Literal(Constant(value))) =>
+				case constantVal @ ValDef(mods, name, tpt, Literal(Constant(constant))) =>
 					if (!mods.isMutable && !constantVal.symbol.isParameter)
-						variables.addConstant(name, value)
+						variables.addConstant(name, constant)
 					constantVal
 				//Constant val built from other constants
-				case value @ ValDef(mods, name, tpt, application @ Apply(fun , args)) =>
-					evaluateToConstant(application) match {
-						case Some(constant) => ValDef(mods, name, tpt, Literal(Constant(constant)))
-						case _ => value
+				case nonConstantVal @ ValDef(mods, name, tpt, application @ Apply(fun , args)) =>
+					if (!mods.isMutable && !nonConstantVal.symbol.isParameter) {
+						evaluateToConstant(application) match {
+							case Some(constant) => {
+								variables.addConstant(name, constant)
+								ValDef(mods, name, tpt, Literal(Constant(constant)))
+							}
+							case _ => nonConstantVal
+						}
 					}
+					else
+						nonConstantVal
 				//Regular if
-				case If(cond, thenP, elseP) =>
-					If(cond, super.transform(thenP), super.transform(elseP))
+				case If(cond, thenP, elseP) => {
+					val evaluatedCondOption = evaluateToConstant(cond)
+					variables.addBlockLevel
+					val evaluatedThen = super.transform(thenP)
+					variables.removeBlockLevel; variables.addBlockLevel
+					val evaluatedElse = super.transform(elseP)
+					variables.removeBlockLevel
+					evaluatedCondOption match {
+						case Some(evaluatedCond) => If(Literal(Constant(evaluatedCond)), evaluatedThen, evaluatedElse)
+						case None => If(cond, evaluatedThen, evaluatedElse)
+					}
+				}
 				case anyOther => anyOther
 			}
 		}
@@ -133,24 +155,28 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 						if (b.isInstanceOf[Double]) b.asInstanceOf[Double] else b.asInstanceOf[Int])
 
 					operation match {
+						//a + b
 						case TermName("$plus") => Some((i: List[_]) => i match {
 							case ihead :: irest =>
 								val vals = castVals(value, ihead)
 								vals._1 + vals._2
 							case _ => None
 						})
+						//a - b
 						case TermName("$minus") => Some((i: List[_]) => i match {
 							case ihead :: irest =>
 								val vals = castVals(value, ihead)
 								vals._1 - vals._2
 							case _ => None
 						})
+						//a * b
 						case TermName("$mul") => Some((i: List[_]) => i match {
 							case ihead :: irest =>
 								val vals = castVals(value, ihead)
 								vals._1 * vals._2
 							case _ => None
 						})
+						//a / b
 						case TermName("$div") => Some((i: List[_]) => i match {
 							case ihead :: irest =>
 								val vals = castVals(value, ihead)
@@ -161,29 +187,105 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 									toReturn
 							case _ => None
 						})
+						//a % b
+						case TermName("$percent") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								val vals = castVals(value, ihead)
+								vals._1 % vals._2
+							case _ => None
+						})
+						//a < b
+						case TermName("$less") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								val vals = castVals(value, ihead)
+								vals._1 < vals._2
+							case _ => None
+						})
+						//a <= b
+						case TermName("$less$eq") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								val vals = castVals(value, ihead)
+								vals._1 <= vals._2
+							case _ => None
+						})
+						//a > b
+						case TermName("$greater") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								val vals = castVals(value, ihead)
+								vals._1 > vals._2
+							case _ => None
+						})
+						//a >= b
+						case TermName("$greater$eq") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								val vals = castVals(value, ihead)
+								vals._1 >= vals._2
+							case _ => None
+						})
+						//a == b
+						case TermName("$eq$eq") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								val vals = castVals(value, ihead)
+								vals._1 == vals._2
+							case _ => None
+						})
+						//a != b
+						case TermName("$bang$eq") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								val vals = castVals(value, ihead)
+								vals._1 != vals._2
+							case _ => None
+						})
 						case _ => None
 					}
 				}
 				else if (value.isInstanceOf[String]) {
 					operation match {
+						//s + t
 						case TermName("$plus") => Some((i: List[_]) => i match {
 							case ihead :: irest => value.asInstanceOf[String] + ihead.asInstanceOf[String]
 							case _ => None
 						})
+						//s.length
 						case TermName("length") => Some((i: List[_]) => value.asInstanceOf[String].length)
 						case _ => None
 					}
 				}
-//				else if (value.isInstanceOf[Boolean]) {
-//					operation match {
-//						case TermName("$plus") => Some((i: List[_]) => i match {
-//							case ihead :: irest => value.asInstanceOf[String] + ihead.asInstanceOf[String]
-//							case _ => None
-//						})
-//						case TermName("length") => Some((i: List[_]) => value.asInstanceOf[String].length)
-//						case _ => None
-//					}
-//				}
+				else if (value.isInstanceOf[Boolean]) {
+					operation match {
+						//a == b
+						case TermName("$eq$eq") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								value.asInstanceOf[Boolean] == ihead.asInstanceOf[Boolean]
+							case _ => None
+						})
+						//a != b
+						case TermName("$bang$eq") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								value.asInstanceOf[Boolean] != ihead.asInstanceOf[Boolean]
+							case _ => None
+						})
+						//a && b
+						case TermName("$amp$amp") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								value.asInstanceOf[Boolean] && ihead.asInstanceOf[Boolean]
+							case _ => None
+						})
+						//a || b
+						case TermName("$bar$bar") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								value.asInstanceOf[Boolean] || ihead.asInstanceOf[Boolean]
+							case _ => None
+						})
+						//!a
+						case TermName("unary_$bang") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								!value.asInstanceOf[Boolean]
+							case _ => None
+						})
+						case _ => None
+					}
+				}
 				else
 					None
 			}
@@ -195,7 +297,6 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 							val evaluatedArgsOption = getEvaluatedArguments(args)
 							evaluatedArgsOption match {
 								case Some(evaluatedArgs) => {
-									println(">>>>>>>> " + evaluatedArgs)
 									Some(appliedFunction(evaluatedArgs))
 								}
 								case _ => None
