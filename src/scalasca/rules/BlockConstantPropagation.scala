@@ -222,6 +222,24 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 								vals._1 >= vals._2
 							case _ => None
 						})
+						//a | b
+						case TermName("$bar") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								value.asInstanceOf[Int] | ihead.asInstanceOf[Int]
+							case _ => None
+						})
+						//a & b
+						case TermName("$amp") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								value.asInstanceOf[Int] & ihead.asInstanceOf[Int]
+							case _ => None
+						})
+						//a ^ b
+						case TermName("$up") => Some((i: List[_]) => i match {
+							case ihead :: irest =>
+								value.asInstanceOf[Int] ^ ihead.asInstanceOf[Int]
+							case _ => None
+						})
 						//a == b
 						case TermName("$eq$eq") => Some((i: List[_]) => i match {
 							case ihead :: irest =>
