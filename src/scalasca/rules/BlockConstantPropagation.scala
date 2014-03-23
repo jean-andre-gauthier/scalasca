@@ -94,10 +94,13 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 					variables.removeBlockLevel
 					Block(newStats, newExpr)
 				}
-//				//Block return value
-//				case Apply(fun, args) => {
-//
-//				}
+				//Block return value
+				case apply @ Apply(fun, args) => {
+					evaluateToConstant(apply) match {
+						case Some(evaluatedConstant) => Literal(Constant(evaluatedConstant))
+						case _ => apply
+					}
+				}
 				//Constant val literal
 				case constantVal @ ValDef(mods, name, tpt, Literal(Constant(constant))) =>
 					if (!mods.isMutable && !constantVal.symbol.isParameter)
