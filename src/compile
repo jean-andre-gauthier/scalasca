@@ -9,7 +9,8 @@ if [ -f ../bin/scalasca.jar ]; then
 fi
 
 mkdir ../bin/classes
-fsc -d ../bin/classes scalasca/core/ScalaSCA.scala scalasca/rules/*.scala
+#fsc -d ../bin/classes scalasca/core/ScalaSCA.scala scalasca/rules/*.scala
+scalac -d ../bin/classes -classpath "/Applications/eclipse/plugins/org.junit_4.11.0.v201303080030/junit.jar" scalasca/core/ScalaSCA.scala scalasca/rules/*.scala scalasca/tests/unit/rules/*.scala
 cp scalac-plugin.xml ../bin/classes
 cd ../bin/classes
 jar cf ../scalasca.jar .

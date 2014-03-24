@@ -21,6 +21,8 @@ abstract class WarningLevel(originatingRuleName: String, warningMessage: String)
 case class NoWarning() extends WarningLevel("", "") {
 	override def toString = ""
 }
+case class Success(originatingRuleName: String, successMessage: String)
+	extends WarningLevel(originatingRuleName, " " + Console.GREEN +  "SUCCESS: " + successMessage + Console.RESET)
 case class Notice(originatingRuleName: String, noticeMessage: String)
 	extends WarningLevel(originatingRuleName, " " + Console.WHITE +  "NOTICE: " + noticeMessage + Console.RESET)
 case class Warning(originatingRuleName: String, warningMessage: String)

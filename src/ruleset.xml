@@ -1,6 +1,0 @@
-<ruleset>
-	<rule>
-		<name>"Division by zero"</name>
-		<path>"rules/DivisionByZero.jar"</path>
-	</rule>
-</ruleset>

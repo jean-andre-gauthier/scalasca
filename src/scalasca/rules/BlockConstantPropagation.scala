@@ -4,12 +4,11 @@ import scalasca.core._
 import scala.tools.nsc._
 import reflect.runtime.universe._
 
-case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree) extends RuleResult {
+case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree, nPropagatedConstants: Integer) extends RuleResult {
 
 	override def warning = Notice("Constant Propagation", "Propagating constants inside syntactic blocks (simple operations)")
 
-	override def toString: String = //Console.GREEN + " succeeded" + Console.RESET
-		tree.toString()
+	override def toString: String = warning.toString + Console.GREEN + " " + nPropagatedConstants + " values evaluated as constants" + Console.RESET + "\n" + tree.toString()
 }
 
 /**
@@ -22,8 +21,10 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 	import global._
 
 	//Stores both vals and vars
-	object variables {
+	private object variables {
 		private var variablesInScope = List[Map[Name, (Boolean, Option[Any])]]()
+		private var _nPropagatedConstants = 0
+		def nPropagatedConstants = _nPropagatedConstants
 
 		def findConstant(termName: Name): Option[Any] = {
 			variablesInScope.
@@ -39,6 +40,7 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 			if (variablesInScope.isEmpty)
 				addBlockLevel
 			variablesInScope = (variablesInScope.head + (term -> Tuple2(constant, propagatedValue))) :: variablesInScope.tail
+			_nPropagatedConstants += 1
 		}
 
 		def addConstant(constantTerm: Name, propagatedValue: Any): Unit =
@@ -68,11 +70,14 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 				case ClassDef(mods, name, tparams, Template(parents, self, classMembers)) => {
 					variables.addBlockLevel
 					val newClassMembers = super.transformTrees(classMembers.filter(member => member.symbol.isMethod))
+					variables.removeBlockLevel
 					ClassDef(mods, name, tparams, Template(parents, self, newClassMembers))
 				}
 				//Ignores object fields
 				case ModuleDef(mods, name, Template(parents, self, objectMembers)) => {
+					variables.addBlockLevel
 					val newObjectMembers = super.transformTrees(objectMembers.filter(tree => tree.symbol.isMethod))
+					variables.removeBlockLevel
 					ModuleDef(mods, name, Template(parents, self, newObjectMembers))
 				}
 				//Functions, provided they are more than a mere literal
@@ -334,6 +339,6 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 	}
 
 	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): BlockConstantPropagatedTree[T] = {
-		BlockConstantPropagatedTree(transformer.transform(syntaxTree))
+		BlockConstantPropagatedTree(transformer.transform(syntaxTree), variables.nPropagatedConstants)
 	}
 }
