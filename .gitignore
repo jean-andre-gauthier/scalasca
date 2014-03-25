@@ -30,6 +30,11 @@ local.properties
 .texlipse
 
 src/scalasca/tests/standalone/*.class
+
+#OSX
 .DS_Store
 .classpath
 .project
+
+#SBT
+target/
