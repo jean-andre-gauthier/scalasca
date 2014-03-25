@@ -2,7 +2,8 @@ package scalasca.tests.unit.rules
 
 import org.junit._
 
-class StandardTests extends BlockConstantPropagationTest {
+class StandardTests extends BlockConstantPropagationTest with CodeRemovalTest with UselessAssignmentTest {
 
-	@Test def myTest = assert(false, "")
+	//Allows eclipse to recognise class as unit test class
+	@Test def myTest = ()
 }

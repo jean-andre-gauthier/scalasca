@@ -53,8 +53,9 @@ class UnreadValueVariable[T <: Global](implicit global: T) extends Rule[T]()(glo
 
 					stats.foreach(stat => {
 						stat match {
-							case valDef @ ValDef(_, _, _, _) => {
-								valSet += Tuple2(valDef, false)
+							case valDef @ ValDef(mods, _, _, _) => {
+								if (!mods.isMutable)
+									valSet += Tuple2(valDef, false)
 							}
 							case _ =>
 						}

@@ -7,7 +7,7 @@ case class UnusedCodeRemovalTree[T <: Global](tree: T#Tree, nRemovedBlocks: Inte
 
 	override def warning = Notice("Unused Code Removal", "Removing code that no execution path traverses")
 
-	override def toString: String = warning.toString + " - " + Console.GREEN + nRemovedBlocks + " unused block(s) removed" + Console.RESET + "\n" + tree.toString()
+	override def toString: String = warning.toString + " - " + Console.GREEN + nRemovedBlocks + " unused block(s) removed" + Console.RESET// + "\n" + tree.toString()
 }
 
 class UnusedCodeRemoval[T <: Global](implicit global: T) extends Rule[T]()(global) {

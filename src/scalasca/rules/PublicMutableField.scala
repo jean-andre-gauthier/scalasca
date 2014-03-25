@@ -16,7 +16,7 @@ package scalasca.rules
 
 import scalasca.core._
 import scala.tools.nsc._
-import akka.actor.Actor
+//import akka.actor.Actor
 
 case class PublicMutableFieldNodes(nodes: List[Global#Position]) extends RuleResult {
 

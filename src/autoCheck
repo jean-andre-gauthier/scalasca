@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -d ../bin/classes ]; then
+	rm -r ../bin/classes
+fi
+
+mkdir ../bin/classes
+cp ../bin/scalasca.jar ../bin/scalascaTemp.jar
+
+scalac -Xplugin:../bin/scalascaTemp.jar -d ../bin/classes -classpath "/Applications/eclipse/plugins/org.junit_4.11.0.v201303080030/junit.jar" scalasca/core/ScalaSCA.scala scalasca/rules/*.scala scalasca/tests/unit/rules/*.scala
+cd ../bin/classes
+jar cf ../scalasca.jar .

@@ -1,5 +1,11 @@
 
 class SimpleTest {
-	val a = 12
-	val b = 13
+
+	def myMethod = {
+		var a = 12
+		var b = 13
+		a = 1
+		var c = b
+		println("hello")
+	}
 }
