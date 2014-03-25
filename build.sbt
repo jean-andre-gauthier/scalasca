@@ -10,8 +10,6 @@ libraryDependencies ++= Seq(
 	"org.scala-lang" % "scala-library-all" % "2.11.0-M8",
 	"org.scala-lang" % "scala-reflect" % "2.11.0-M8",
 	"org.scala-lang" % "scala-compiler" % "2.11.0-M8",
-	"org.scala-lang" % "scala-parser-combinators" % "2.11.0-M4",
-	"org.scala-lang" % "scala-xml" % "2.11.0-M4",
 	"junit" % "junit" % "4.11" % "test",
 	"org.hamcrest" % "hamcrest-core" % "1.3",
 	"com.novocode" % "junit-interface" % "0.10" % "test",

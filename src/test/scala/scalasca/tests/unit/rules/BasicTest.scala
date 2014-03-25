@@ -7,10 +7,7 @@ import scala.tools.nsc.Settings
 
 class BasicTest {
 
-    val settings = new Settings
-    settings.verbose.value = true
-    settings.Ylogcp.value  = true
-	val global = new Global(new Settings, new ConsoleReporter(settings))
+	val global = new Global(new Settings, new ConsoleReporter(new Settings()))
 	val run = new global.Run
 	import global._
 
