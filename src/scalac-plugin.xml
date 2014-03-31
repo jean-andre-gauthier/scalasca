@@ -1,4 +1,4 @@
 <plugin>
-  <name>scalasca.core</name>
-  <classname>scalasca.core.ScalaSCA</classname>
+  <name>scalasca</name>
+  <classname>lara.epfl.scalasca.core.ScalaSCA</classname>
 </plugin>
