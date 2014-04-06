@@ -3,6 +3,7 @@ package lara.epfl.scalasca.rules
 import lara.epfl.scalasca.core._
 import scala.tools.nsc._
 import reflect.runtime.universe._
+import scala.tools.reflect.ToolBox
 
 case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree, nPropagatedConstants: Integer) extends RuleResult {
 
@@ -29,80 +30,120 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 
 		override def transform(tree: Tree): Tree = {
 			tree match {
-				case PackageDef(pid, stats) =>
-					PackageDef(pid, super.transformTrees(stats))
+				case q"package $ref { ..$stats }" =>
+					val newStats: List[Tree] = transformTrees(stats)
+					q"package $ref { ..$newStats }"
 				//Ignores class fields
-				case ClassDef(mods, name, tparams, Template(parents, self, classMembers)) => {
-					variables.addBlockLevel
-					val newClassMembers = super.transformTrees(classMembers.filter(member => member.symbol.isMethod))
-					variables.removeBlockLevel
-					ClassDef(mods, name, tparams, Template(parents, self, newClassMembers))
+				case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" => {
+					val newStats: List[Tree] = stats.map(member => member match {
+						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => transform(member)
+						case _ => member})
+					q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$newStats }"
 				}
 				//Ignores object fields
-				case ModuleDef(mods, name, Template(parents, self, objectMembers)) => {
-					variables.addBlockLevel
-					val newObjectMembers = super.transformTrees(objectMembers.filter(tree => tree.symbol.isMethod))
-					variables.removeBlockLevel
-					ModuleDef(mods, name, Template(parents, self, newObjectMembers))
+				case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" => {
+					val newBody: List[Tree] = body.map(member => member match {
+						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => transform(member)
+						case _ => member})
+					q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$newBody }"
+				}
+				//Ignores trait fields
+				case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" => {
+					val newStats: List[Tree] = stats.map(member => member match {
+						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => transform(member)
+						case _ => member})
+					q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$newStats }"
 				}
 				//Functions, provided they are more than a mere literal
-				case functionDefinition @ DefDef(mods, name, tprarams, vparamss, tpt, rhs) => rhs match {
+				case functionDefinition @ q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => expr match {
 					case Block(_, _) => {
-						variables.addBlockLevel
-						val toReturn = DefDef(mods, name, tprarams, vparamss, tpt, super.transform(rhs))
-						variables.removeBlockLevel
-						toReturn
+						val newExpr = transform(expr)
+						q"$mods def $tname[..$targs](...$paramss): $tpt = $newExpr"
 					}
 					case _ =>
 						functionDefinition
 				}
-				//Local block => add a block level
-				case Block(stats, expr) => {
-					variables.addBlockLevel
-					val newStats = super.transformTrees(stats)
-					val newExpr = super.transform(expr)
-					variables.removeBlockLevel
-					Block(newStats, newExpr)
-				}
-				//Block return value
-				case apply @ Apply(fun, args) => {
-					evaluateToConstant[global.type, Any](apply)(global)(variables) match {
-						case Some(evaluatedConstant) => Literal(Constant(evaluatedConstant))
-						case _ => apply
+				//Regular if
+				case q"if ($cond) $thenP else $elseP" => {
+					val evaluatedCondOption = evaluateToConstant[global.type, Any](cond)(global)(variables)
+					val evaluatedThen = transform(thenP)
+					val evaluatedElse = transform(elseP)
+					evaluatedCondOption match {
+						case Some(evaluatedCond) => {
+							if (evaluatedCond.isInstanceOf[Boolean]) {
+								val booleanCond = evaluatedCond.asInstanceOf[Boolean]
+								q"if ($booleanCond) $evaluatedThen else $evaluatedElse"
+							}
+							else q"if ($cond) $evaluatedThen else $evaluatedElse"
+						}
+						case None => q"if ($cond) $evaluatedThen else $evaluatedElse"
 					}
 				}
-				//Constant val literal
-				case constantVal @ ValDef(mods, name, tpt, Literal(Constant(constant))) =>
-					if (!mods.isMutable && !constantVal.symbol.isParameter)
-						variables.addFlagged(name, constant)
-					constantVal
-				//Constant val built from other constants
-				case nonConstantVal @ ValDef(mods, name, tpt, application @ Apply(fun , args)) =>
-					if (!mods.isMutable && !nonConstantVal.symbol.isParameter) {
+				case constantVal @ q"$mods val $tname: $tpt = $expr" => expr match {
+					//Constant val literal
+					case cst @ Literal(Constant(constant)) => {
+						println(">>>" + tree.symbol)
+						variables.addFlagged(constantVal.symbol, constant)
+						constantVal
+					}
+					//Constant val built from other constants
+					case application @ q"$fun(...$args)" =>
 						evaluateToConstant[global.type, Any](application)(global)(variables) match {
 							case Some(constant) => {
-								variables.addFlagged(name, constant)
-								ValDef(mods, name, tpt, Literal(Constant(constant)))
+								if (constant.isInstanceOf[Int]) {
+									val intConstant = constant.asInstanceOf[Int]
+									variables.addFlagged(constantVal.symbol, constant)
+									q"$mods val $tname: $tpt = $intConstant"
+								}
+								else if (constant.isInstanceOf[String]) {
+									val stringConstant = constant.asInstanceOf[String]
+									variables.addFlagged(constantVal.symbol, constant)
+									q"$mods val $tname: $tpt = $stringConstant"
+								}
+								else constantVal
 							}
-							case _ => nonConstantVal
+							case c => constantVal
 						}
-					}
-					else
-						nonConstantVal
-				//Regular if
-				case If(cond, thenP, elseP) => {
-					val evaluatedCondOption = evaluateToConstant[global.type, Any](cond)(global)(variables)
-					variables.addBlockLevel
-					val evaluatedThen = super.transform(thenP)
-					variables.removeBlockLevel; variables.addBlockLevel
-					val evaluatedElse = super.transform(elseP)
-					variables.removeBlockLevel
-					evaluatedCondOption match {
-						case Some(evaluatedCond) => If(Literal(Constant(evaluatedCond)), evaluatedThen, evaluatedElse)
-						case None => If(cond, evaluatedThen, evaluatedElse)
-					}
+					case _ => constantVal
 				}
-				case anyOther => anyOther
+				//Local block => add a block level
+				case block @ q"{ ..$stats }" => stats match {
+					case stat :: Nil => stat match {
+						case application @ q"$fun(...$args)" =>
+							evaluateToConstant[global.type, Any](application)(global)(variables) match {
+								case Some(constant) => {
+									if (constant.isInstanceOf[Int]) {
+										val intConstant = constant.asInstanceOf[Int]
+										q"$intConstant"
+									}
+									else if (constant.isInstanceOf[String]) {
+										val stringConstant = constant.asInstanceOf[String]
+										q"$stringConstant"
+									}
+									else stat
+								}
+								case c => stat
+							}
+						case _ => stat
+					}
+					case s :: rest =>
+						val newStats: List[Tree] = stats.map(stat => transform(stat) /*evaluateToConstant[global.type, Any](stat)(global)(variables) match {
+							case Some(evaluatedConstant) =>
+									if (evaluatedConstant.isInstanceOf[Integer]) {
+										val intEvaluatedConstant: Int = evaluatedConstant.asInstanceOf[Integer]
+										q"$intEvaluatedConstant"
+									}
+									else if (evaluatedConstant.isInstanceOf[String]) {
+										val stringEvaluatedConstant = evaluatedConstant.asInstanceOf[String]
+										q"$stringEvaluatedConstant"
+									}
+									else stat
+							case _ => stat
+							}*/)
+						q"{ ..$newStats }"
+				}
+//				case g"$a; $b"
+//				case anyOther => anyOther
 			}
 		}
 	}

@@ -17,7 +17,13 @@ Run
 ------
 
  Once the plugin has been compiled, it can be used as an additional phase for the compiler: `scalac -Xplugin:target/scala-XXX/scalasca_XXX-0.1.jar`, where `XXX` stands for the current scala version.
- 
+
+Improvements
+---------------
+
+- `BlockConstantPropagation` casts to `String` and `Int` in `Constant val built from other constants`. Any clean quasiquotish solution for this (not being able to be lifted to `Any`)?
+- `BlockConstantPropagation` does not consider arbitrary methods
+
 Currently checked
 -------------------------
 

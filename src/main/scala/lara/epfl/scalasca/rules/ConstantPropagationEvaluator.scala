@@ -9,12 +9,11 @@ trait ConstantPropagationEvaluator {
 			import global._
 
 			def getAppliedFunction(app: Tree): Option[List[_] => _] = app match {
-				case Select(qualifier, name) => evaluateToConstant[global.type, U](qualifier)(global)(variables) match {
+				case q"$qualifier....$name" => evaluateToConstant[global.type, U](qualifier)(global)(variables) match {
 					case Some(evaluatedQualifier) => getOperation(evaluatedQualifier, name)
 					case _ => None
 				}
-				case _ => None
-			}
+				case _ => None}
 			def getEvaluatedArguments(args: List[Tree]): Option[List[Any]] = {
 				val evaluatedArguments = args.map(arg => evaluateToConstant[global.type, U](arg)(global)(variables))
 				if (evaluatedArguments.forall(arg => !arg.isEmpty))
@@ -184,22 +183,24 @@ trait ConstantPropagationEvaluator {
 			}
 
 			application match {
-				case Apply(fun, args) => {
-					getAppliedFunction(fun) match {
-						case Some(appliedFunction) => {
-							val evaluatedArgsOption = getEvaluatedArguments(args)
-							evaluatedArgsOption match {
-								case Some(evaluatedArgs) => {
-									Some(appliedFunction(evaluatedArgs))
-								}
+				case q"$fun(...$argss)" => fun match {
+					case Literal(Constant(constant)) =>
+						Some(constant)
+					case ident @ Ident(_) =>
+						println(ident)
+						println(ident.symbol)
+						variables.findFlagged(ident.symbol)
+					case _ => getAppliedFunction(fun) match {
+						case Some(appliedFunction) => argss match {
+							case args :: Nil => getEvaluatedArguments(args) match {
+								case Some(evaluatedArgs) => Some(appliedFunction(evaluatedArgs))
 								case _ => None
 							}
+							case _ => None
 						}
 						case _ => None
 					}
 				}
-				case Literal(Constant(constant)) => Some(constant)
-				case Ident(termname) => variables.findFlagged(termname)
 				case _ => None
 			}
 		}
