@@ -46,7 +46,7 @@ class ScalaSCA(val global: Global) extends Plugin {
 
 			def apply(unit: CompilationUnit) {
 				this.unit = unit
-				val result = new DefaultRule()(global).apply(unit.body)
+				val result = new DefaultRule()(global, unit.source.path).apply(unit.body)
 			}
 		}
 	}

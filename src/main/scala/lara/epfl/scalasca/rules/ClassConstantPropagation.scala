@@ -19,9 +19,15 @@ import scala.tools.nsc._
 
 case class ClassConstantPropagatedTree[T <: Global](tree: T#Tree) extends RuleResult {
 
-	override def warning = Notice("Class Constant Propagation", "Propagating constant class fields (simple operations)")
+	override def warning = Notice("Class Constant Propagation",
+		"Propagating constant class fields (simple operations)",
+		Console.GREEN + "No useless re-assignments found" + Console.RESET,
+		GeneralCategory())
 
 	override def toString: String = tree.toString
+
+	//TODO
+	override def isSuccess: Boolean = true
 }
 
 /**

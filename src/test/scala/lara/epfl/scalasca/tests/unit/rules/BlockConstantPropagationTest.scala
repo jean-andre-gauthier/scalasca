@@ -10,12 +10,9 @@ trait BlockConstantPropagationTest extends BasicTest {
 	import global._
 
 	@Test def integerAddTest: Unit = {
-//		val toTest = Apply(Ident(newTermName("println")), List(Literal(Constant(2))))
 		val input = symbolisedTree(q"class A { def m(): Unit = { val a = 10; val b = a + 15 }}")
 		val expectedOutput = q"class A { def m(): Unit = { val a = 10; val b = 25 }}"
 		val propagatedTree = (new BlockConstantPropagation[global.type]()(global)).apply(input, List())
-		println(showRaw(propagatedTree.tree))
-		println(showRaw(expectedOutput))
 		testTreeEquality(propagatedTree.tree, expectedOutput)
 	}
 

@@ -19,18 +19,32 @@ import scala.tools.nsc._
 
 case class EmptyFinallyNodes(nodes: List[Global#Position]) extends RuleResult {
 
-	override def warning = Warning("Empty Finally", "Empty finally block")
+	override def warning = Warning("BLK_EMPTY_FINALLY",
+		"Empty finally block",
+		Console.GREEN + "No empty finally block found" + Console.RESET,
+		BadPracticeCategory())
 
-	override def toString: String = nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.toString))
+	override def toString: String =
+		if (nodes.length > 0)
+			nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.formattedWarning))
+		else
+			warning.formattedWarning
+
+	override def isSuccess: Boolean = nodes.length == 0
 }
 
+/**
+ * BLK_EMPTY_FINALLY
+ *
+ * Finds empty finally blocks
+ */
 class EmptyFinally[T <: Global](implicit global: T) extends Rule[T]()(global) {
 
 	import global._
 
 	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): EmptyFinallyNodes = {
 
-		val emptyFinallys = for ( tree @ Try(block, catches, Literal(Constant(()))) <- syntaxTree) yield (tree.pos)
+		val emptyFinallys = for ( tree @ q"try $expr catch { case ..$cases } finally {}" <- syntaxTree) yield (tree.pos)
 		EmptyFinallyNodes(emptyFinallys)
 	}
 }

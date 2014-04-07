@@ -19,6 +19,8 @@ package lara.epfl.scalasca.rules
 abstract class RuleResult {
 
 	def warning: WarningLevel
+
+	def isSuccess: Boolean = true
 }
 
 case class NoResult() extends RuleResult {

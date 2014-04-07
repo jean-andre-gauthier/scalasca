@@ -21,21 +21,24 @@ import scala.collection.mutable._
 
 case class UnusedValueVariableNodes(nodes: List[Global#Position]) extends RuleResult {
 
-	override def warning = Notice("Unused Variable", "Bad practice: unused val/var")
+	override def warning = Notice("DEC_UNUSED_DATA", "Unused val/var", "", BadPracticeCategory())
 
-	override def toString: String = nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.toString()))
+	override def toString: String = nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.formattedWarning))
 
+	override def isSuccess: Boolean = nodes.length == 0
 }
 
 /**
- * Searches variables and values that are never used after their declaration.
+ * DEC_UNUSED_DATA
+ *
+ * Searches variables and values that are never used / only written to after their declaration.
  *
  * DOES NOT filter out:
  * 		- Fields
- * 		- Values that are only written to
  *
  * TODO
  * 		- Include vars
+ * 		- Values that are only written to
  * 		- How to generalise to fields?
  */
 class UnusedValueVariable[T <: Global](implicit global: T) extends Rule[T]()(global) {

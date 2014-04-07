@@ -7,15 +7,25 @@ import scala.tools.reflect.ToolBox
 
 case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree, nPropagatedConstants: Integer) extends RuleResult {
 
-	override def warning = Notice("Constant Propagation", "Propagating constants inside syntactic blocks (simple operations)")
+	override def warning = Notice("GEN_BLOCK_CONST_PROP",
+		"Propagating constants inside syntactic blocks (simple operations)",
+		Console.GREEN + "No constants to be propagated" + Console.RESET,
+		GeneralCategory())
 
-	override def toString: String = warning.toString + Console.GREEN + " " + nPropagatedConstants + " values evaluated as constants" + Console.RESET// + "\n" + tree.toString()
+	override def toString: String =
+		if (nPropagatedConstants > 0)
+			warning.formattedWarning + Console.BLUE + " " + nPropagatedConstants + " values evaluated as constants" + Console.RESET
+		else
+			warning.formattedDefaultMessage
+
+	override def isSuccess: Boolean = nPropagatedConstants == 0
 }
 
 /**
+ * GEN_BLOCK_CONST_PROP
+ *
  * Considers:
  * 	- Values in simple expression blocks
- * 	- Any defined class field, provided a ClassConstantPropagatedMap is provided
  */
 class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T]()(global) with ConstantPropagationEvaluator {
 
@@ -141,9 +151,8 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 							case _ => stat
 							}*/)
 						q"{ ..$newStats }"
+					case Nil => q""
 				}
-//				case g"$a; $b"
-//				case anyOther => anyOther
 			}
 		}
 	}

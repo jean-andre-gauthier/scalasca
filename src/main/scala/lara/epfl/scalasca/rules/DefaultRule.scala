@@ -17,7 +17,7 @@ package lara.epfl.scalasca.rules
 import lara.epfl.scalasca.core._
 import scala.tools.nsc._
 
-class DefaultRule[T <: Global](implicit global: T) extends Rule[T]()(global) {
+class DefaultRule[T <: Global](implicit global: T, sourcePath: String) extends Rule[T]()(global) {
 
 	import global._
 
@@ -28,7 +28,8 @@ class DefaultRule[T <: Global](implicit global: T) extends Rule[T]()(global) {
 		val constProp = (new BlockConstantPropagation[global.type]()(global)).apply(syntaxTree, computedResults)
 		val codeRemoval = (new UnusedCodeRemoval[global.type]()(global)).apply(constProp.tree, computedResults)
 		val uselessAssignment = (new UselessAssignment[global.type]()(global)).apply(syntaxTree, computedResults)
-		(new ShowWarnings[global.type]()(global)).apply(syntaxTree, List(divByZero, constProp, codeRemoval, uselessAssignment))
+		val freeRessources = (new FreeResourceControlFlowAnalysis[global.type]()(global, q"scala.io.Source.fromFile", q"close")).apply(syntaxTree, computedResults)
+		(new ShowWarnings[global.type]()(global, sourcePath)).apply(syntaxTree, List(divByZero, constProp, codeRemoval, uselessAssignment, freeRessources))
 		NoResult()
 	}
 }

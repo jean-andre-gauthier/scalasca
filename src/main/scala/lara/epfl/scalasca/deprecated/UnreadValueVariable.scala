@@ -12,28 +12,33 @@
  * Author: Jean Andre GAUTHIER
  * Supervisors: Dr. Viktor KUNCAK, Iulian DRAGOS
  ******************************************************************************/
-package lara.epfl.scalasca.rules
+package lara.epfl.scalasca.deprecated
 
 import lara.epfl.scalasca.core._
+import lara.epfl.scalasca.rules._
 import scala.tools.nsc._
 import scala.collection.mutable._
+import lara.epfl.scalasca.rules.Rule
+import lara.epfl.scalasca.rules.RuleResult
 
 
 case class UnreadValueVariableNodes(nodes: List[Global#Position]) extends RuleResult {
 
-	override def warning = Notice("Unread Variable", "Val/var is never being used as rvalue")
+	override def warning = Notice("Unread Variable", "Val/var is never being used as rvalue", "", BadPracticeCategory())
 
 	override def toString: String = nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.toString()))
 }
 
 /**
+ * DEPRECATED - merged with DEC_UNUSED_DATA
+ *
  * Searches variables and values that are never read out after having been declared
  *
  * TODO
  * 		- Include vars
  * 		- How to generalise to fields?
  */
-class UnreadValueVariable[T <: Global](implicit global: T) extends Rule[T]()(global) {
+@deprecated class UnreadValueVariable[T <: Global](implicit global: T) extends Rule[T]()(global) {
 
 	import global._
 

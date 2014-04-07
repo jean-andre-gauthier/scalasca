@@ -20,11 +20,25 @@ import scala.tools.nsc._
 
 case class DivisionByZeroNodes(nodes: List[Global#Position]) extends RuleResult {
 
-	override def warning = SevereWarning("Division by zero", "Division By Zero")
+	override def warning = Fatal("ARI_DIV_BY_ZERO",
+		"Division By Zero",
+		Console.GREEN + "No division by 0 found" + Console.RESET,
+		FatalCategory())
 
-	override def toString: String = nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.toString))
+	override def toString: String =
+		if (nodes.length > 0)
+			nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.formattedWarning))
+		else
+			warning.formattedDefaultMessage
+
+	override def isSuccess: Boolean = nodes.length == 0
 }
 
+/**
+ * ARI_DIV_BY_ZERO GEN_BLOCK_CONST_PROP
+ *
+ * Finds explicit divisions by 0
+ */
 class DivisionByZero[T <: Global](implicit global: T) extends Rule[T]()(global) {
 
 	import global._

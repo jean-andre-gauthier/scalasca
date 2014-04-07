@@ -14,20 +14,31 @@
  ******************************************************************************/
 package lara.epfl.scalasca.rules
 
-abstract class WarningLevel(originatingRuleName: String, warningMessage: String) {
-  override def toString = "ScalaSCA [" + Console.MAGENTA + originatingRuleName + Console.RESET + "] " + warningMessage
+abstract class WarningCategory(category: String) {
+	override def toString = category
 }
 
-case class NoWarning() extends WarningLevel("", "") {
+case class NoCategory() extends WarningCategory("")
+case class BadPracticeCategory() extends WarningCategory("Bad practice")
+case class GeneralCategory() extends WarningCategory("General")
+case class FatalCategory() extends WarningCategory("Fatal")
+
+abstract class WarningLevel(originatingRuleName: String, warningMessage: String, defaultMessage: String, category: WarningCategory) {
+
+	private val warningHeader = "ScalaSCA [" + Console.MAGENTA + originatingRuleName + Console.RESET + ", " + category+ "] "
+	val formattedWarning = warningHeader + warningMessage
+	val formattedDefaultMessage = warningHeader + defaultMessage
+}
+
+case class NoWarning() extends WarningLevel("", "", "", NoCategory()) {
 	override def toString = ""
 }
-case class Success(originatingRuleName: String, successMessage: String)
-	extends WarningLevel(originatingRuleName, " " + Console.GREEN +  "SUCCESS: " + successMessage + Console.RESET)
-case class Notice(originatingRuleName: String, noticeMessage: String)
-	extends WarningLevel(originatingRuleName, " " + Console.WHITE +  "NOTICE: " + noticeMessage + Console.RESET)
-case class Warning(originatingRuleName: String, warningMessage: String)
-	extends WarningLevel(originatingRuleName, " " + Console.YELLOW +  "WARNING: " + warningMessage + Console.RESET)
-case class SevereWarning(originatingRuleName: String, severeWarningMessage: String)
-	extends WarningLevel(originatingRuleName, " " + Console.YELLOW +  "SEVERE WARNING: " + severeWarningMessage + Console.RESET)
-case class Fatal(originatingRuleName: String, fatalWarningMessage: String)
-	extends WarningLevel(originatingRuleName, " " + Console.RED +  "FATAL: " + fatalWarningMessage + Console.RESET)
+
+case class Notice(originatingRuleName: String, noticeMessage: String, defaultMessage: String, category: WarningCategory)
+	extends WarningLevel(originatingRuleName, " " + Console.WHITE +  "NOTICE: " + noticeMessage + Console.RESET, defaultMessage, category)
+case class Warning(originatingRuleName: String, warningMessage: String, defaultMessage: String, category: WarningCategory)
+	extends WarningLevel(originatingRuleName, " " + Console.YELLOW +  "WARNING: " + warningMessage + Console.RESET, defaultMessage, category)
+case class SevereWarning(originatingRuleName: String, severeWarningMessage: String, defaultMessage: String, category: WarningCategory)
+	extends WarningLevel(originatingRuleName, " " + Console.YELLOW +  "SEVERE WARNING: " + severeWarningMessage + Console.RESET, defaultMessage, category)
+case class Fatal(originatingRuleName: String, fatalWarningMessage: String, defaultMessage: String, category: WarningCategory)
+	extends WarningLevel(originatingRuleName, " " + Console.RED +  "FATAL: " + fatalWarningMessage + Console.RESET, defaultMessage, category)

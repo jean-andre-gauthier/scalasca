@@ -19,18 +19,24 @@ import scala.tools.nsc._
 
 //No RuleResult associated to this Rule
 
-class ShowWarnings[T <: Global](implicit global: T) extends Rule[T]()(global) {
+class ShowWarnings[T <: Global](implicit global: T, source: String) extends Rule[T]()(global) {
 
 	import global._
 
 	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): NoResult = {
-		computedResults.foreach(result => showRuleMessage(result))
+		if (computedResults.forall(res => res.isSuccess))
+			println(Console.BOLD + source + Console.RESET + " ScalaSCA " + Console.GREEN + "No errors found" + Console.RESET)
+		else {
+			println(Console.BOLD + source + Console.RESET)
+			computedResults.foreach(result => showRuleMessage(result))
+		}
 		NoResult()
 	}
 
 	private def showRuleMessage(result: RuleResult) = result.warning match {
-		case Fatal(_, _) =>
-			Console.err.println(result.toString())
+		case Fatal(_, _, _, _) =>
+			// Disabled for the moment Console.err.println(result.toString())
+			Console.println(result.toString())
 		case _ =>
 			Console.println(result.toString())
 	}
