@@ -1,4 +1,4 @@
-MET_MISSING_RESOURCE_CLOSING
+MEM_MISSING_RESOURCE_CLOSING
 ============================
 
 *DOES*:

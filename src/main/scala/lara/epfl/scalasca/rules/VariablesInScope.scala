@@ -9,12 +9,10 @@ class VariablesInScope[T <: Global, U](implicit global: T) {
 
 		private var variablesInScope = Map[Symbol, (Boolean, Option[U])]()
 
-		def nFlaggedValues = _flaggedValues.size
-		def nNonFlaggedValues = _nonFlaggedValues.size
-		private var _nonFlaggedValues = List[U]()
-		def getNonFlaggedValues: List[U] = _nonFlaggedValues
-		private var _flaggedValues = List[U]()
-		def getFlaggedValues: List[U] = _flaggedValues
+		def nFlaggedValues = getFlaggedValues.size
+		def nNonFlaggedValues = getNonFlaggedValues.size
+		def getFlaggedValues: List[U] = variablesInScope.filter(v => v._2._1).map(v => v._2._2).flatten.toList
+		def getNonFlaggedValues: List[U] = variablesInScope.filter(v => !v._2._1).map(v => v._2._2).flatten.toList
 
 		def findFlagged(symbol: Symbol): Option[U] = {
 			variablesInScope.
@@ -43,7 +41,7 @@ class VariablesInScope[T <: Global, U](implicit global: T) {
 		}
 
 		def addFlagged(symbol: Symbol, value: U): Unit = {
-				addValue(symbol, true, Some(value))
+			addValue(symbol, true, Some(value))
 		}
 
 		def addNonFlagged(symbol: Symbol): Unit = {
@@ -51,17 +49,15 @@ class VariablesInScope[T <: Global, U](implicit global: T) {
 		}
 
 		def addNonFlagged(symbol: Symbol, value: U): Unit = {
-				addValue(symbol, false, Some(value))
+			addValue(symbol, false, Some(value))
 		}
 
-		//TODO: this method is a piece of crap, redesign it
+		/**
+		 * Updates a given symbol's (newFlag if Some currentFlag if None, newValue if Some currentValue if None)
+		 */
 		def update(symbol: Symbol, flag: Option[Boolean], value: Option[U]): Unit = {
 			variablesInScope get symbol match {
 				case Some(t) => {
-					if (t._2.nonEmpty) {
-						if (!t._1 && (!flag.isEmpty && !flag.get))
-							_nonFlaggedValues ::= t._2.get
-						}
 						val current = variablesInScope(symbol)
 						val newFlag = flag match {
 							case Some(f) => f
@@ -72,8 +68,8 @@ class VariablesInScope[T <: Global, U](implicit global: T) {
 							case _ => current._2
 						}
 						variablesInScope(symbol) = (newFlag, newValue)
-					}
-					case _ =>
+				}
+				case _ =>
 			}
 		}
 }

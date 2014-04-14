@@ -1,0 +1,13 @@
+package <empty> {
+	class BCPIntegerAndIntegerTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Unit = {
+			val a: Int = 10;
+			val b: Int = 2;
+			()
+		}
+	}
+}

@@ -14,15 +14,16 @@
  ******************************************************************************/
 package lara.epfl.scalasca.core
 
-import lara.epfl.scalasca.rules._
-import scala.tools.nsc
-import nsc.Global
-import nsc.Phase
-import nsc.plugins.Plugin
-import nsc.plugins.PluginComponent
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.Flag._
+import scala.tools.nsc
+import scala.tools.nsc.Global
+import scala.tools.nsc.Phase
 import scala.tools.nsc.Settings
+import scala.tools.nsc.plugins.Plugin
+import scala.tools.nsc.plugins.PluginComponent
+
+import lara.epfl.scalasca.rules._
 
 
 class ScalaSCA(val global: Global) extends Plugin {
@@ -33,6 +34,7 @@ class ScalaSCA(val global: Global) extends Plugin {
 	val name = "scalasca"
 	val description = "static code analysis checks"
 	val components = List[PluginComponent](Component)
+	var testRule: String = ""
 
 	private object Component extends PluginComponent {
 		val global: Global = ScalaSCA.this.global
@@ -46,8 +48,34 @@ class ScalaSCA(val global: Global) extends Plugin {
 
 			def apply(unit: CompilationUnit) {
 				this.unit = unit
-				val result = new DefaultRule()(global, unit.source.path).apply(unit.body)
+				runRule(testRule)
+			}
+
+			/**
+			 * The aim here was not to provide a fully fledged rule factory, but rather to facilitate unit tests
+			 */
+			def runRule(rule: String): Unit = rule match {
+				case "blockconstantpropagation" =>
+					val constProp = new BlockConstantPropagation()(global).apply(unit.body, List())
+					println(constProp.tree)
+				case _ =>
+					new DefaultRule()(global, unit.source.path).apply(unit.body)
 			}
 		}
 	}
+
+	override def processOptions(options: List[String], error: String => Unit) {
+		for (option <- options) {
+			if (option.startsWith("testRule:")) {
+				testRule = option.substring(9)
+			} else {
+				error("Option not understood: " + option)
+			}
+		}
+	}
+
+	override val optionsHelp: Option[String] =
+		None
+		// Not displaying test option
+		//Some("  -P:scalasca:ruleset:r             import the ruleset r")
 }

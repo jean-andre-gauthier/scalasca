@@ -1,0 +1,19 @@
+package <empty> {
+	class BCPNumDivNumTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Unit = {
+			val a: Int = 10;
+			val b: Int = 2;
+			val c: Double = 2.5;
+			val d: Double = 12.5;
+			val e: Double = 1.25;
+			val f: Double = 5.0;
+			val g: Int = a./(0);
+			val h: Double = d./(0);
+			()
+		}
+	}
+}

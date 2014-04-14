@@ -1,0 +1,14 @@
+package <empty> {
+	class BCPStringLengthTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Unit = {
+			val a: String = "test";
+			val b: Int = 4;
+			val c: Int = 0;
+			()
+		}
+	}
+}

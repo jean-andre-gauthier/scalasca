@@ -1,0 +1,15 @@
+package <empty> {
+	class BCPBooleanNotTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Unit = {
+			val a: Boolean = true;
+			val b: Boolean = false;
+			val c: Boolean = false;
+			val d: Boolean = true;
+			()
+		}
+	}
+}

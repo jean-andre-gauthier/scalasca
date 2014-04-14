@@ -1,0 +1,13 @@
+package <empty> {
+	class BCPReturnTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Int = {
+			val a: Int = 10;
+			val b: Int = 20;
+			30
+		}
+	}
+}

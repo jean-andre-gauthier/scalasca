@@ -1,0 +1,17 @@
+package <empty> {
+	class BCPNumSubNumTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Unit = {
+			val a: Int = 10;
+			val b: Int = -5;
+			val c: Double = -1.5;
+			val d: Double = 12.5;
+			val e: Double = 2.5;
+			val f: Double = -1.0;
+			()
+		}
+	}
+}

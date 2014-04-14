@@ -1,0 +1,16 @@
+package <empty> {
+	class BCPStringAddTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Unit = {
+			val a: String = "test";
+			val b: String = "test15";
+			val c: String = "test11.5";
+			val d: String = "testfalse";
+			val e: String = "testtest";
+			()
+		}
+	}
+}

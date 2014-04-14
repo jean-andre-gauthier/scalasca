@@ -1,38 +1,20 @@
 package lara.epfl.scalasca.tests.unit.rules
 
-import org.junit._
-import scala.tools.nsc.reporters.ConsoleReporter
-import scala.tools.nsc.Global
-import scala.tools.nsc.Settings
-import scala.tools.nsc.CompilationUnits
-import scala.tools.reflect.ToolBox
-import scala.reflect.runtime.universe
-import scala.reflect.runtime.universe._
+import scala.reflect.runtime.universe.Tree
+import scala.sys.process._
 
 class BasicTest {
 
-	val settings = new Settings
-	settings processArgumentString "-usejavacp"
-	val global = new Global(settings)
-	val run = new global.Run
-
-	val toolBox = runtimeMirror(getClass.getClassLoader).mkToolBox()
-
-	val importer0 = universe.mkImporter(global.rootMirror.universe)
-	val importerA = importer0.asInstanceOf[universe.Importer { val from: global.rootMirror.universe.type }]
-	val importer1 = global.rootMirror.universe.mkImporter(universe)
-	val importerB = importer0.asInstanceOf[global.rootMirror.universe.Importer { val from: universe.type }]
-
-	import global._
-
-	def symbolisedTree(tree: Tree): Tree = {
-		val t = importerA.importTree(tree).duplicate
-		toolBox.typecheck(t)
-		importerB.importTree(t).duplicate
+	def outputToStrippedString(cmd: Seq[String]): String = {
+		val stdError = new StringBuffer()
+		val stdOutput = cmd lines_! ProcessLogger(stdError append _)
+		stdOutput.toList.foldLeft("")((acc, item) => acc + item.toString.trim + "\n")
 	}
 
-	def testTreeEquality(computedTree: Tree, expectedTree: Tree): Unit = {
+	def runTest(prefix: String, test: String): Unit = {
+		val producedOutput = outputToStrippedString(Seq("scalac", "-d", "bin", "-Xplugin:target/scala-2.11.0-RC1/scalasca_2.11.0-RC1-0.1.jar", "-P:scalasca:testRule:" + prefix, "src/test/scala/lara/epfl/scalasca/tests/unit/executables/" + prefix + "/" + test + ".scala"))
+		val expectedOutput = outputToStrippedString(Seq("cat", "src/test/scala/lara/epfl/scalasca/tests/unit/executables/" + prefix + "/" + test + ".txt"))
 
-		assert(computedTree.equalsStructure(expectedTree), "Test failed")
+		assert(producedOutput == expectedOutput, "Produced output:\n" + producedOutput + "\nExpected output:\n" + expectedOutput)
 	}
 }

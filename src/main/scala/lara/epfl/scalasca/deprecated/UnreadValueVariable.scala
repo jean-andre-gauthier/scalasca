@@ -38,7 +38,7 @@ case class UnreadValueVariableNodes(nodes: List[Global#Position]) extends RuleRe
  * 		- Include vars
  * 		- How to generalise to fields?
  */
-@deprecated class UnreadValueVariable[T <: Global](implicit global: T) extends Rule[T]()(global) {
+@deprecated("Merged with DEC_UNUSED_DATA", "0.1") class UnreadValueVariable[T <: Global](implicit global: T) extends Rule[T]()(global) {
 
 	import global._
 

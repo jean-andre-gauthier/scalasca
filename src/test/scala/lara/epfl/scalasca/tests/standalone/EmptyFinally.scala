@@ -19,7 +19,7 @@ object EmptyFinally {
 		try {
 			println("In the try block")
 		} catch {
-		case e => println("In the catch block")
+		case e: Throwable => println("In the catch block")
 		}
 		finally {
 		}

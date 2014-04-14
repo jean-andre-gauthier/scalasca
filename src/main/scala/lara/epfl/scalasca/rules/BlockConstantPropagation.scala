@@ -75,7 +75,7 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 				}
 				//Regular if
 				case q"if ($cond) $thenP else $elseP" => {
-					val evaluatedCondOption = evaluateToConstant[global.type, Any](cond)(global)(variables)
+					val evaluatedCondOption = evaluateToConstant[global.type, Any](transform(cond))(global)(variables)
 					val evaluatedThen = transform(thenP)
 					val evaluatedElse = transform(elseP)
 					evaluatedCondOption match {
@@ -92,10 +92,12 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 				case constantVal @ q"$mods val $tname: $tpt = $expr" => expr match {
 					//Constant val literal
 					case cst @ Literal(Constant(constant)) => {
-						println(">>>" + tree.symbol)
 						variables.addFlagged(constantVal.symbol, constant)
 						constantVal
 					}
+					case q"if ($cond) $thenP else $elseP" =>
+						val transformedExpr = transform(expr)
+						q"$mods val $tname: $tpt = $transformedExpr"
 					//Constant val built from other constants
 					case application @ q"$fun(...$args)" =>
 						evaluateToConstant[global.type, Any](application)(global)(variables) match {
@@ -103,12 +105,22 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 								if (constant.isInstanceOf[Int]) {
 									val intConstant = constant.asInstanceOf[Int]
 									variables.addFlagged(constantVal.symbol, constant)
-									q"$mods val $tname: $tpt = $intConstant"
+									q"$mods val $tname: Int = $intConstant"
+								}
+								else if (constant.isInstanceOf[Double]) {
+									val doubleConstant = constant.asInstanceOf[Double]
+									variables.addFlagged(constantVal.symbol, constant)
+									q"$mods val $tname: Double = $doubleConstant"
+								}
+								else if (constant.isInstanceOf[Boolean]) {
+										val booleanConstant = constant.asInstanceOf[Boolean]
+										variables.addFlagged(constantVal.symbol, constant)
+										q"$mods val $tname: Boolean = $booleanConstant"
 								}
 								else if (constant.isInstanceOf[String]) {
 									val stringConstant = constant.asInstanceOf[String]
 									variables.addFlagged(constantVal.symbol, constant)
-									q"$mods val $tname: $tpt = $stringConstant"
+									q"$mods val $tname: String = $stringConstant"
 								}
 								else constantVal
 							}
@@ -125,6 +137,14 @@ class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T](
 									if (constant.isInstanceOf[Int]) {
 										val intConstant = constant.asInstanceOf[Int]
 										q"$intConstant"
+									}
+									else if (constant.isInstanceOf[Double]) {
+										val doubleConstant = constant.asInstanceOf[Double]
+										q"$doubleConstant"
+									}
+									else if (constant.isInstanceOf[Boolean]) {
+										val booleanConstant = constant.asInstanceOf[Boolean]
+										q"$booleanConstant"
 									}
 									else if (constant.isInstanceOf[String]) {
 										val stringConstant = constant.asInstanceOf[String]

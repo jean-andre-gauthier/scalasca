@@ -1,0 +1,31 @@
+package <empty> {
+	class BCPIfTest extends scala.AnyRef {
+		def <init>() = {
+			super.<init>();
+			()
+		};
+		def m(): Int = {
+			val a: Int = 10;
+			val b: Int = if (true)
+				12
+			else
+				13;
+			if (true)
+			{
+				scala.this.Predef.println("ok");
+				10
+			}
+			else
+				if (true)
+				{
+					scala.this.Predef.println("not ok");
+					11
+				}
+				else
+				{
+					scala.this.Predef.println("not ok at all");
+					12
+				}
+		}
+	}
+}
