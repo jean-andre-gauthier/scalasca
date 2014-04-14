@@ -30,7 +30,7 @@ ScalaSCA has four warning levels, that are displayed in their respective colours
 | Rule Error Code | Description | Category |
 | ---------- | ----------- | -------- |
 | [ASS_USELESS_VAR_ASSIGNMENT](doc/ASS_USELESS_VAR_ASSIGNMENT.md) | Re-assignment to var has no effect | Bad Practice |
-| [MEM_MISSING_RESOURCE_CLOSING](doc/MEM_MISSING_RESOURCE_CLOSING.md) | Removes unused code | Bad Practice |
+| [MEM_MISSING_RESOURCE_CLOSING](doc/MEM_MISSING_RESOURCE_CLOSING.md) | Resource not freed after usage | Bad Practice |
 | [CLS_PUBLIC_MUTABLE_FIELDS](doc/CLS_PUBLIC_MUTABLE_FIELDS.md) | Public vars in classes/objects/traits | Bad Practice |
 | [DEC_UNUSED_DATA](doc/DEC_UNUSED_DATA.md) | Declared but unused val/var | Bad Practice |
 | [ARI_DIV_BY_ZERO](doc/ARI_DIV_BY_ZERO.md) | Divison by 0 | Fatal |

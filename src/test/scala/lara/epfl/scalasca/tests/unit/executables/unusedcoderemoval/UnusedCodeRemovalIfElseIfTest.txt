@@ -1,0 +1,9 @@
+package <empty> {
+	class UCRIfElseIfTest extends scala.AnyRef {
+		def <init>(): UCRIfElseIfTest = {
+			UCRIfElseIfTest.super.<init>();
+			()
+		};
+		def m(): Unit = scala.this.Predef.println("true")
+	}
+}

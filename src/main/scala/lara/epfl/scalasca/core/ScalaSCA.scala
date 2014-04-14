@@ -58,6 +58,9 @@ class ScalaSCA(val global: Global) extends Plugin {
 				case "blockconstantpropagation" =>
 					val constProp = new BlockConstantPropagation()(global).apply(unit.body, List())
 					println(constProp.tree)
+				case "unusedcoderemoval" =>
+					val unusedCode = new UnusedCodeRemoval()(global).apply(unit.body, List())
+					println(unusedCode.tree)
 				case _ =>
 					new DefaultRule()(global, unit.source.path).apply(unit.body)
 			}

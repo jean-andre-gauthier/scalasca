@@ -1,0 +1,36 @@
+package <empty> {
+	class UCRFieldIfTest extends scala.AnyRef {
+		def <init>(): UCRFieldIfTest = {
+			UCRFieldIfTest.super.<init>();
+			()
+			};
+		class A extends scala.AnyRef {
+			def <init>(): UCRFieldIfTest.this.A = {
+				A.super.<init>();
+				()
+			};
+			private[this] val a: Int = 11;
+			<stable> <accessor> def a: Int = A.this.a
+		};
+		object B extends scala.AnyRef {
+			def <init>(): UCRFieldIfTest.this.B.type = {
+				B.super.<init>();
+				()
+			};
+			private[this] val b: Int = 11;
+			<stable> <accessor> def b: Int = B.this.b
+		};
+		@volatile <synthetic> private[this] var B$module: UCRFieldIfTest.this.B.type = _;
+		<stable> def B: UCRFieldIfTest.this.B.type = {
+			UCRFieldIfTest.this.B$module = new UCRFieldIfTest.this.B.type();
+			UCRFieldIfTest.this.B$module
+		};
+		abstract trait C extends scala.AnyRef {
+			def /*C*/$init$(): Unit = {
+			()
+			};
+			private[this] val c: Int = 11;
+			<stable> <accessor> def c: Int = C.this.c
+		}
+	}
+}

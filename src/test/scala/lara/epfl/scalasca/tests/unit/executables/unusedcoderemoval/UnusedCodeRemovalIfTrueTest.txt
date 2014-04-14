@@ -1,0 +1,9 @@
+package <empty> {
+	class UCRIfTrueTest extends scala.AnyRef {
+		def <init>(): UCRIfTrueTest = {
+			UCRIfTrueTest.super.<init>();
+			()
+		};
+		def m(): Unit = scala.this.Predef.println("true")
+	}
+}
