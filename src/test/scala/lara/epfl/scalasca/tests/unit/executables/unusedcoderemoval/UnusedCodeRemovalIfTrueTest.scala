@@ -1,8 +1,9 @@
 class UCRIfTrueTest {
 	def m(): Unit = {
-		if (true)
-			println("true")
+		val s = "a string"
+		if (s.length() == 8)
+			println("test successful")
 		else
-			println("false")
+			println("test failed")
 	}
 }

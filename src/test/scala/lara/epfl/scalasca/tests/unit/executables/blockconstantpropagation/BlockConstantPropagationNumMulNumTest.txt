@@ -1,17 +1,12 @@
-package <empty> {
-	class BCPNumMulNumTest extends scala.AnyRef {
-		def <init>() = {
-			super.<init>();
-			()
-		};
-		def m(): Unit = {
-			val a: Int = 10;
-			val b: Int = 150;
-			val c: Double = 115.0;
-			val d: Double = 12.5;
-			val e: Double = 125.0;
-			val f: Double = 168.75;
-			()
-		}
-	}
-}
+value a
+10
+value b
+150
+value c
+115.0
+value d
+12.5
+value e
+125.0
+value f
+168.75

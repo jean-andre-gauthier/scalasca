@@ -19,11 +19,19 @@ import scala.tools.nsc._
 
 //No RuleResult associated to this Rule
 
-class ShowWarnings[T <: Global](implicit global: T, source: String) extends Rule[T]()(global) {
+class ShowWarnings[T <: Global](val global: T, source: String) extends Rule {
+
+	type TS = NoState
+	type RR = NoResult
 
 	import global._
 
-	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): NoResult = {
+	override def getRuleResult(state: TS): RR = NoResult()
+	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = List[(Option[Position], TS)]()
+	override def getDefaultState(): TS = NoState()
+	override def mergeStates(s1: TS, s2: TS): TS = NoState()
+
+	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
 		if (computedResults.forall(res => res.isSuccess))
 			println(Console.BOLD + source + Console.RESET + " ScalaSCA " + Console.GREEN + "No errors found" + Console.RESET)
 		else {

@@ -1,21 +1,20 @@
-package <empty> {
-	class BCPNumEqNumTest extends scala.AnyRef {
-		def <init>() = {
-			super.<init>();
-			()
-		};
-		def m(): Unit = {
-			val a: Int = 10;
-			val b: Boolean = false;
-			val c: Boolean = true;
-			val d: Boolean = true;
-			val e: Boolean = false;
-			val f: Double = 10.0;
-			val g: Boolean = false;
-			val h: Boolean = true;
-			val i: Boolean = true;
-			val j: Boolean = false;
-			()
-		}
-	}
-}
+value a
+10
+value b
+false
+value c
+true
+value d
+true
+value e
+false
+value f
+10.0
+value g
+false
+value h
+true
+value i
+true
+value j
+false

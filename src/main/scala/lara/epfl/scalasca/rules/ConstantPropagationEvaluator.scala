@@ -4,18 +4,18 @@ import scala.tools.nsc._
 
 trait ConstantPropagationEvaluator {
 
-		def evaluateToConstant[T <: Global, U](application: T#Tree)(global: T)(variables: VariablesInScope[global.type, U]): Option[Any] = {
-
+		def evaluateToConstant[T <: Global](application: T#Tree)(global: T)(variables: Map[Global#Symbol, Any]): Option[Any] = {
 			import global._
 
 			def getAppliedFunction(app: Tree): Option[List[_] => _] = app match {
-				case q"$qualifier....$name" => evaluateToConstant[global.type, U](qualifier)(global)(variables) match {
+				case Select(qualifier, name) => evaluateToConstant(qualifier)(global)(variables) match {
 					case Some(evaluatedQualifier) => getOperation(evaluatedQualifier, name)
 					case _ => None
 				}
-				case _ => None}
+				case _ => None
+			}
 			def getEvaluatedArguments(args: List[Tree]): Option[List[Any]] = {
-				val evaluatedArguments = args.map(arg => evaluateToConstant[global.type, U](arg)(global)(variables))
+				val evaluatedArguments = args.map(arg => evaluateToConstant(arg)(global)(variables))
 				if (evaluatedArguments.forall(arg => !arg.isEmpty))
 					Some(evaluatedArguments.flatten)
 				else
@@ -438,11 +438,20 @@ trait ConstantPropagationEvaluator {
 			}
 
 			application match {
+				case q"if ($cond) $thenP else $elseP" =>
+					evaluateToConstant(cond)(global)(variables) match {
+						case Some(constant) if constant.isInstanceOf[Boolean] =>
+							if (constant.asInstanceOf[Boolean])
+								evaluateToConstant(thenP)(global)(variables)
+							else
+								evaluateToConstant(thenP)(global)(variables)
+						case _ => None
+					}
 				case q"$fun(...$argss)" => fun match {
 					case Literal(Constant(constant)) =>
 						Some(constant)
 					case ident @ Ident(_) =>
-						variables.findFlagged(ident.symbol)
+						variables.get(ident.symbol)
 					case _ => getAppliedFunction(fun) match {
 						case Some(appliedFunction) => argss match {
 							case args :: Nil => getEvaluatedArguments(args) match {

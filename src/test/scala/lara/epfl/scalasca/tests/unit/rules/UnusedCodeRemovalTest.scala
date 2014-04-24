@@ -13,4 +13,6 @@ trait UnusedCodeRemovalTest extends BasicTest {
 	@Test def UCRIfElseIfTest: Unit = runUCRTest("UnusedCodeRemovalIfElseIfTest")
 	@Test def UCRIfFalseTest: Unit = runUCRTest("UnusedCodeRemovalIfFalseTest")
 	@Test def UCRIfTrueTest: Unit = runUCRTest("UnusedCodeRemovalIfTrueTest")
+//	@Test def UCRWhileTest: Unit = runUCRTest("UnusedCodeRemovalWhileTest")
+//	@Test def UCRDoWhileTest: Unit = runUCRTest("UnusedCodeRemovalDoWhileTest")
 }

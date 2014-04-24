@@ -1,9 +1,9 @@
-package lara.epfl.scalasca.rules
+package lara.epfl.scalasca.deprecated
 
 import scala.tools.nsc._
 import scala.collection.mutable._
 
-class VariablesInScope[T <: Global, U](implicit global: T) {
+class VariablesInScope[T <: Global, U](global: T) {
 
 		import global._
 

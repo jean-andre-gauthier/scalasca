@@ -34,21 +34,59 @@ case class DivisionByZeroNodes(nodes: List[Global#Position]) extends RuleResult 
 	override def isSuccess: Boolean = nodes.length == 0
 }
 
+case class DivisionByZeroState(nodes: List[Global#Position]) extends TraversalState
+
 /**
  * ARI_DIV_BY_ZERO GEN_BLOCK_CONST_PROP
  *
  * Finds explicit divisions by 0
  */
-class DivisionByZero[T <: Global](implicit global: T) extends Rule[T]()(global) {
+class DivisionByZero[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends Rule with ConstantPropagationEvaluator {
 
 	import global._
 
-	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): DivisionByZeroNodes = {
+	type TS = DivisionByZeroState
+	type RR = DivisionByZeroNodes
 
-		val divisionByZeroNodes =
-				for ( tree @ Apply(Select(rcvr, TermName("$div")), List(Literal(Constant(0)))) <- syntaxTree/*;
-					if rcvr.tpe <:< typeOf[Int]*/)
-					yield (tree.pos)
-		DivisionByZeroNodes(divisionByZeroNodes)
+	override def getDefaultState(): TS = DivisionByZeroState(List())
+
+	override def getRuleResult(state: TS): RR = DivisionByZeroNodes(state.nodes.sortBy(_.pos.point))
+
+	override def mergeStates(s1: TS, s2: TS): TS =
+			DivisionByZeroState((s1.nodes ::: s2.nodes).distinct)
+
+	private val inputSymbolMap = SymbolMapper.getLiteralMapping(inputResults)
+
+	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
+			case Apply(Select(rcvr, TermName("$div")), List(denominator)) if rcvr.tpe <:< typeOf[Int] =>
+				val computedDenominator =
+					if (inputSymbolMap.isEmpty)
+						denominator match {
+							case Literal(Constant(0)) => Some(0)
+							case _ => None
+						}
+					else
+						evaluateToConstant(denominator)(global)(inputSymbolMap) match {
+							case Some(constant) => Some(constant.asInstanceOf[Int])
+							case _ => None
+						}
+				computedDenominator match {
+					case Some(value) if value == 0 =>
+						gotoLeaf(state.copy(nodes = tree.pos :: state.nodes))
+					case _ =>
+						gotoChildren(List(rcvr, denominator), state)
+				}
+			case _ =>
+				gotoChildren(tree, state)
+	}
+
+	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
+		Rule.apply(global)(syntaxTree, List(this)) match {
+			case result :: rest => result match {
+				case d @ DivisionByZeroNodes(_) => d
+				case _ => DivisionByZeroNodes(List())
+			}
+			case _ => DivisionByZeroNodes(List())
+		}
 	}
 }

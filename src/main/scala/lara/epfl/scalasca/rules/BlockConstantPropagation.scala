@@ -2,10 +2,12 @@ package lara.epfl.scalasca.rules
 
 import lara.epfl.scalasca.core._
 import scala.tools.nsc._
-import reflect.runtime.universe._
+import reflect.runtime.universe.Transformer
 import scala.tools.reflect.ToolBox
 
-case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree, nPropagatedConstants: Integer) extends RuleResult {
+case class BlockConstantPropagatedTree(symbolTable: Map[Global#Symbol, SymbolImage]) extends RuleResult with SymbolMapper {
+
+	override def getMapping(): Map[Global#Symbol, SymbolImage] = symbolTable
 
 	override def warning = Notice("GEN_BLOCK_CONST_PROP",
 		"Propagating constants inside syntactic blocks (simple operations)",
@@ -13,12 +15,12 @@ case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree, nPropagatedCon
 		GeneralCategory())
 
 	override def toString: String =
-		if (nPropagatedConstants > 0)
-			warning.formattedWarning + Console.BLUE + " " + nPropagatedConstants + " values evaluated as constants" + Console.RESET
+		if (symbolTable.size > 0)
+			warning.formattedWarning + Console.BLUE + " " + symbolTable.size + " values evaluated as constants" + Console.RESET
 		else
 			warning.formattedDefaultMessage
 
-	override def isSuccess: Boolean = nPropagatedConstants == 0
+	override def isSuccess: Boolean = symbolTable.size == 0
 }
 
 /**
@@ -27,157 +29,99 @@ case class BlockConstantPropagatedTree[T <: Global](tree: T#Tree, nPropagatedCon
  * Considers:
  * 	- Values in simple expression blocks
  */
-class BlockConstantPropagation[T <: Global](implicit global: T) extends Rule[T]()(global) with ConstantPropagationEvaluator {
+
+case class BlockConstantPropagationTraversalState(map: Map[Global#Symbol, Any]) extends TraversalState
+
+class BlockConstantPropagation[T <: Global](val global: T) extends Rule with ConstantPropagationEvaluator {
 
 	import global._
 
-	private object transformer extends Transformer {
+	type TS = BlockConstantPropagationTraversalState
+	type RR = BlockConstantPropagatedTree
 
-		private val variables =
-			new VariablesInScope[global.type, Any]()(global)
-		def nPropagatedConstants =
-			variables.nFlaggedValues
+	override def getRuleResult(state: TS): RR = BlockConstantPropagatedTree(state.map.map({
+		case (k, v) => (k, LiteralImage(v))
+	}))
 
-		override def transform(tree: Tree): Tree = {
-			tree match {
+	override def getDefaultState(): TS = BlockConstantPropagationTraversalState(Map())
+
+	override def mergeStates(s1: TS, s2: TS): TS =
+			BlockConstantPropagationTraversalState(s1.map ++ s2.map)
+
+	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
 				case q"package $ref { ..$stats }" =>
-					val newStats: List[Tree] = transformTrees(stats)
-					q"package $ref { ..$newStats }"
+					goto(stats, state)
 				//Ignores class fields
 				case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" => {
-					val newStats: List[Tree] = stats.map(member => member match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => transform(member)
-						case _ => member})
-					q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$newStats }"
+					goto(stats, state, stat => stat match {
+						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
+						case _ => false})
 				}
 				//Ignores object fields
 				case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" => {
-					val newBody: List[Tree] = body.map(member => member match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => transform(member)
-						case _ => member})
-					q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$newBody }"
+					goto(body, state, member => member match {
+						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
+						case _ => false})
 				}
 				//Ignores trait fields
 				case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" => {
-					val newStats: List[Tree] = stats.map(member => member match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => transform(member)
-						case _ => member})
-					q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$newStats }"
+					goto(stats, state, stat => stat match {
+						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
+						case _ => false})
 				}
 				//Functions, provided they are more than a mere literal
 				case functionDefinition @ q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => expr match {
-					case Block(_, _) => {
-						val newExpr = transform(expr)
-						q"$mods def $tname[..$targs](...$paramss): $tpt = $newExpr"
-					}
+					case Block(_, _) =>
+						goto(expr, state)
 					case _ =>
-						functionDefinition
+						goto(Nil, state)
 				}
 				//Regular if
-				case q"if ($cond) $thenP else $elseP" => {
-					val evaluatedCondOption = evaluateToConstant[global.type, Any](transform(cond))(global)(variables)
-					val evaluatedThen = transform(thenP)
-					val evaluatedElse = transform(elseP)
-					evaluatedCondOption match {
-						case Some(evaluatedCond) => {
-							if (evaluatedCond.isInstanceOf[Boolean]) {
-								val booleanCond = evaluatedCond.asInstanceOf[Boolean]
-								q"if ($booleanCond) $evaluatedThen else $evaluatedElse"
-							}
-							else q"if ($cond) $evaluatedThen else $evaluatedElse"
-						}
-						case None => q"if ($cond) $evaluatedThen else $evaluatedElse"
-					}
-				}
+				case q"if ($cond) $thenP else $elseP" =>
+					goto(List(cond, thenP, elseP), state)
 				case constantVal @ q"$mods val $tname: $tpt = $expr" => expr match {
 					//Constant val literal
-					case cst @ Literal(Constant(constant)) => {
-						variables.addFlagged(constantVal.symbol, constant)
-						constantVal
-					}
-					case q"if ($cond) $thenP else $elseP" =>
-						val transformedExpr = transform(expr)
-						q"$mods val $tname: $tpt = $transformedExpr"
-					//Constant val built from other constants
+					case cst @ Literal(Constant(constant)) =>
+						goto(Nil, state.copy(map = state.map + (constantVal.symbol -> constant)))
 					case application @ q"$fun(...$args)" =>
-						evaluateToConstant[global.type, Any](application)(global)(variables) match {
+						evaluateToConstant(application)(global)(state.map) match {
 							case Some(constant) => {
-								if (constant.isInstanceOf[Int]) {
-									val intConstant = constant.asInstanceOf[Int]
-									variables.addFlagged(constantVal.symbol, constant)
-									q"$mods val $tname: Int = $intConstant"
-								}
-								else if (constant.isInstanceOf[Double]) {
-									val doubleConstant = constant.asInstanceOf[Double]
-									variables.addFlagged(constantVal.symbol, constant)
-									q"$mods val $tname: Double = $doubleConstant"
-								}
-								else if (constant.isInstanceOf[Boolean]) {
-										val booleanConstant = constant.asInstanceOf[Boolean]
-										variables.addFlagged(constantVal.symbol, constant)
-										q"$mods val $tname: Boolean = $booleanConstant"
-								}
-								else if (constant.isInstanceOf[String]) {
-									val stringConstant = constant.asInstanceOf[String]
-									variables.addFlagged(constantVal.symbol, constant)
-									q"$mods val $tname: String = $stringConstant"
-								}
-								else constantVal
+								if (constant.isInstanceOf[Int])
+									goto(Nil, state.copy(map = state.map + (constantVal.symbol -> constant.asInstanceOf[Int])))
+								else if (constant.isInstanceOf[Double])
+									goto(Nil, state.copy(map = state.map + (constantVal.symbol -> constant.asInstanceOf[Double])))
+								else if (constant.isInstanceOf[Boolean])
+									goto(Nil, state.copy(map = state.map + (constantVal.symbol -> constant.asInstanceOf[Boolean])))
+								else if (constant.isInstanceOf[String])
+									goto(Nil, state.copy(map = state.map + (constantVal.symbol -> constant.asInstanceOf[String])))
+								else
+									goto(Nil, state)
 							}
-							case c => constantVal
+							case c =>
+								goto(Nil, state)
 						}
-					case _ => constantVal
+					case anyOther =>
+						goto(anyOther.children, state)
 				}
-				//Local block => add a block level
 				case block @ q"{ ..$stats }" => stats match {
-					case stat :: Nil => stat match {
-						case application @ q"$fun(...$args)" =>
-							evaluateToConstant[global.type, Any](application)(global)(variables) match {
-								case Some(constant) => {
-									if (constant.isInstanceOf[Int]) {
-										val intConstant = constant.asInstanceOf[Int]
-										q"$intConstant"
-									}
-									else if (constant.isInstanceOf[Double]) {
-										val doubleConstant = constant.asInstanceOf[Double]
-										q"$doubleConstant"
-									}
-									else if (constant.isInstanceOf[Boolean]) {
-										val booleanConstant = constant.asInstanceOf[Boolean]
-										q"$booleanConstant"
-									}
-									else if (constant.isInstanceOf[String]) {
-										val stringConstant = constant.asInstanceOf[String]
-										q"$stringConstant"
-									}
-									else stat
-								}
-								case c => stat
-							}
-						case _ => stat
-					}
+					case stat :: Nil =>
+							goto(stat, state)
 					case s :: rest =>
-						val newStats: List[Tree] = stats.map(stat => transform(stat) /*evaluateToConstant[global.type, Any](stat)(global)(variables) match {
-							case Some(evaluatedConstant) =>
-									if (evaluatedConstant.isInstanceOf[Integer]) {
-										val intEvaluatedConstant: Int = evaluatedConstant.asInstanceOf[Integer]
-										q"$intEvaluatedConstant"
-									}
-									else if (evaluatedConstant.isInstanceOf[String]) {
-										val stringEvaluatedConstant = evaluatedConstant.asInstanceOf[String]
-										q"$stringEvaluatedConstant"
-									}
-									else stat
-							case _ => stat
-							}*/)
-						q"{ ..$newStats }"
-					case Nil => q""
+						goto(block.children, state)
+					case Nil =>
+						goto(Nil, state)
 				}
-			}
-		}
+				case anyOther =>
+					goto(anyOther.children, state)
 	}
 
-	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): BlockConstantPropagatedTree[T] = {
-		BlockConstantPropagatedTree(transformer.transform(syntaxTree), transformer.nPropagatedConstants)
+	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
+		Rule.apply(global)(syntaxTree, List(this)) match {
+			case result :: rest => result match {
+				case b @ BlockConstantPropagatedTree(_) => b
+				case _ => BlockConstantPropagatedTree(Map())
+			}
+			case _ => BlockConstantPropagatedTree(Map())
+		}
 	}
 }

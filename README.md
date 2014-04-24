@@ -29,10 +29,10 @@ ScalaSCA has four warning levels, that are displayed in their respective colours
 
 | Rule Error Code | Description | Category |
 | ---------- | ----------- | -------- |
-| [ASS_USELESS_VAR_ASSIGNMENT](doc/ASS_USELESS_VAR_ASSIGNMENT.md) | Re-assignment to var has no effect | Bad Practice |
+| [ASS_USELESSASSIGNMENT](doc/ASS_USELESS_VAR_ASSIGNMENT.md) | (Re-)assignment to val/var has no effect | Bad Practice |
 | [MEM_MISSING_RESOURCE_CLOSING](doc/MEM_MISSING_RESOURCE_CLOSING.md) | Resource not freed after usage | Bad Practice |
 | [CLS_PUBLIC_MUTABLE_FIELDS](doc/CLS_PUBLIC_MUTABLE_FIELDS.md) | Public vars in classes/objects/traits | Bad Practice |
-| [DEC_UNUSED_DATA](doc/DEC_UNUSED_DATA.md) | Declared but unused val/var | Bad Practice |
+| [MET_DOUBLE_TRIPLE_EQUALS](doc/MET_DOUBLE_TRIPLE_EQUALS.md) | (`Akka.Actor`) Use of == vs === | Dodgy Code |
 | [ARI_DIV_BY_ZERO](doc/ARI_DIV_BY_ZERO.md) | Divison by 0 | Fatal |
 | [GEN_UNUSED_CODE_REMOVAL](doc/GEN_UNUSED_CODE_REMOVAL.md) | Removes unused code | General |
 | [GEN_BLOCK_CONST_PROP](doc/GEN_BLOCK_CONST_PROP.md) | Propagates constant values | General |

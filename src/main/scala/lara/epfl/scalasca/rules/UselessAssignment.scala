@@ -2,31 +2,30 @@ package lara.epfl.scalasca.rules
 
 import lara.epfl.scalasca.core._
 import scala.tools.nsc._
-import scala.collection.mutable._
 
 
-case class UselessAssignmentPositions(nodes: List[Global#Position]) extends RuleResult {
+case class UselessAssignmentNodes(uselessAssignments: List[Global#Position]) extends RuleResult {
 
-	override def warning = Warning("ASS_USELESS_VAR_ASSIGNMENT",
-			"Variable is re-assigned but not read out subsequently",
-			Console.GREEN + "No useless re-assignments found" + Console.RESET,
+	override def warning = Warning("ASS_USELESS_ASSIGNMENT",
+			"Val/var is being assigned to, but never read subsequently",
+			Console.GREEN + "No useless assignments found" + Console.RESET,
 			BadPracticeCategory())
 
 	override def toString: String =
-		if (nodes.length > 0)
-			nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.formattedWarning))
+		if (uselessAssignments.length > 0)
+			uselessAssignments.foldLeft("")((acc, pos) => acc + "\n" + pos.showError(warning.formattedWarning))
 		else
 			warning.formattedDefaultMessage
 
-	def toTestString: String = nodes.foldLeft("")((acc, pos) => acc + "\n" + pos.line)
-
-	override def isSuccess: Boolean = nodes.length == 0
+	override def isSuccess: Boolean = uselessAssignments.length == 0
 }
 
+case class UselessAssignmentTraversalState(currentlyUselessAssignments: Map[Global#Symbol, Global#Position], uselessAssignments: Map[Global#Symbol, List[Global#Position]]) extends TraversalState
+
 /**
- * ASS_USELESS_VAR_ASSIGNMENT
+ * ASS_USELESS_ASSIGNMENT
  *
- * Searches for variables that have an assignment which is not read out subsequently
+ * Searches for values/variables that have an assignment which is not read out subsequently
  *
  * DOES NOT filter out:
  * 		- Fields
@@ -34,74 +33,76 @@ case class UselessAssignmentPositions(nodes: List[Global#Position]) extends Rule
  * TODO
  * 		- How to generalise to fields?
  */
-class UselessAssignment[T <: Global](implicit global: T) extends Rule[T]()(global) {
+class UselessAssignment[T <: Global](val global: T) extends Rule {
 
 	import global._
 
-	private object traverser extends Traverser {
+	type TS = UselessAssignmentTraversalState
+	type RR = UselessAssignmentNodes
 
-		private val variablesInScope =
-			new VariablesInScope[global.type, Tree]()(global)
-		def uselessAssignemnts =
-			variablesInScope.getNonFlaggedValues
+	override def getDefaultState(): TS = UselessAssignmentTraversalState(Map(), Map())
 
-		override def traverse(tree: Tree): Unit = tree match {
-				case q"package $ref { ..$stats }" =>
-					traverseTrees(stats)
-				//Ignores class fields themselves, but analyses their rhs accordingly
-				case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" => {
-					stats.foreach(member => member match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => traverse(member)
-						case _ =>})
+	override def getRuleResult(state: TS): RR = UselessAssignmentNodes((state.currentlyUselessAssignments.values.toList ::: state.uselessAssignments.values.toList.flatten).distinct.sortBy(_.point))
+
+	override def mergeStates(s1: TS, s2: TS): TS =
+			UselessAssignmentTraversalState(s1.currentlyUselessAssignments, s1.uselessAssignments ++ s2.uselessAssignments)
+
+	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
+		case q"package $ref { ..$stats }" =>
+			goto(stats, state)
+		//Ignores class fields themselves, but analyses their rhs accordingly
+		case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" =>
+			goto(stats, state)
+		//Ignores object fields themselves, but analyses their rhs accordingly
+		case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" =>
+			goto(body, state)
+		//Ignores trait fields
+		case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
+			goto(stats, state)
+		//Ignores secondary constructors
+		case q"$mods def this(...$paramss) = this(..$argss)" =>
+			goto(argss, state)
+		//Ignores method definitions
+		case q"$mods def $tname[..$tparams](...$paramss): $tpt = $expr" =>
+			goto(expr, state)
+		//Var
+		case varDef @ q"$mods var $tname: $tpt = $expr" =>
+			goto(expr, state.copy(currentlyUselessAssignments = state.currentlyUselessAssignments + (varDef.symbol -> varDef.pos)))
+		//Val
+		case valDef @ q"$mods val $tname: $tpt = $expr" =>
+			println(valDef.id +  " " + expr.id)
+			goto(expr, state.copy(currentlyUselessAssignments = state.currentlyUselessAssignments + (valDef.symbol -> valDef.pos)))
+		case varAssignment @ q"$lhs = $rhs" =>
+			val newState =
+				state.currentlyUselessAssignments.get(lhs.symbol) match {
+					case Some(s) =>
+						state.uselessAssignments.get(lhs.symbol) match {
+							case Some(l) =>
+								UselessAssignmentTraversalState(state.currentlyUselessAssignments + (lhs.symbol -> varAssignment.pos), state.uselessAssignments + (lhs.symbol -> (s :: l)))
+							case None =>
+								UselessAssignmentTraversalState(state.currentlyUselessAssignments + (lhs.symbol -> varAssignment.pos), state.uselessAssignments + (lhs.symbol -> List(s)))
+						}
+					case None =>
+						state.copy(currentlyUselessAssignments = state.currentlyUselessAssignments + (lhs.symbol -> varAssignment.pos))
 				}
-				//Ignores object fields themselves, but analyses their rhs accordingly
-				case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" => {
-					body.foreach(member => member match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => traverse(member)
-						case _ =>})
-				}
-				//Functions, provided they are more than a mere literal
-				case functionDefinition @ q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => expr match {
-					case Block(_, _) =>
-						traverse(expr)
-					case anyOther =>
-						traverse(anyOther)
-				}
-				case q"if ($cond) $thenP else $elseP" => {
-					traverse(cond)
-					traverse(thenP)
-					traverse(elseP)
-				}
-				case varDef @ q"$mods var $tname: $tpt = $expr" => {
-					expr match {
-						case ifBlock @ If(_, _, _) => traverse(ifBlock)
-						case _ => traverse(expr)
-					}
-					variablesInScope.addNonFlagged(varDef.symbol, varDef)
-				}
-				case varAssignment @ q"$lhs = $rhs" => {
-					rhs match {
-						case ifBlock @ If(_, _, _) => traverse(ifBlock)
-						case _ => traverse(rhs)
-					}
-					variablesInScope.update(lhs.symbol, Some(false), Some(varAssignment))
-				}
-				case ident @ Ident(TermName(_)) =>
-					variablesInScope.update(ident.symbol, Some(true), None)
-				//Local block => add a block level
-				case block @ q"{ ..$stats }" => stats match {
-					case stat :: Nil => ()
-					case s :: rest =>
-						stats.foreach(stat => traverse(stat))
-					case Nil =>
-				}
-				case anyOther =>
-					super.traverse(anyOther)
-		}
+			goto(rhs, newState)
+		case q"$expr match { case ..$cases }" =>
+			gotoLeaf(state)
+		case anyOther =>
+			state.currentlyUselessAssignments.get(anyOther.symbol) match {
+				case Some(s) =>
+					gotoLeaf(state.copy(currentlyUselessAssignments = state.currentlyUselessAssignments - anyOther.symbol))
+				case None =>
+					gotoChildren(anyOther, state)
+			}
 	}
-
-	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): UselessAssignmentPositions = {
-		traverser.traverse(syntaxTree)
-		UselessAssignmentPositions(for (valDef <- traverser.uselessAssignemnts) yield (valDef.pos))
+	override def apply(syntaxTree: Tree, computedResults: List[RuleResult] = List()): RR = {
+		Rule.apply(global)(syntaxTree, List(this)) match {
+			case result :: rest => result match {
+				case u @ UselessAssignmentNodes(_) => u
+				case _ => UselessAssignmentNodes(List())
+			}
+			case _ => UselessAssignmentNodes(List())
+		}
 	}
 }

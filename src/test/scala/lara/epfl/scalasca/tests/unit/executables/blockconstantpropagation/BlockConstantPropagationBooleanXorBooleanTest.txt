@@ -1,17 +1,12 @@
-package <empty> {
-	class BCPBooleanXorBooleanTest extends scala.AnyRef {
-		def <init>() = {
-			super.<init>();
-			()
-		};
-		def m(): Unit = {
-			val a: Boolean = true;
-			val b: Boolean = false;
-			val c: Boolean = true;
-			val d: Boolean = false;
-			val e: Boolean = true;
-			val f: Boolean = false;
-			()
-		}
-	}
-}
+value a
+true
+value b
+false
+value c
+true
+value d
+false
+value e
+true
+value f
+false

@@ -4,6 +4,9 @@ package <empty> {
 			UCRIfTrueTest.super.<init>();
 			()
 		};
-		def m(): Unit = scala.this.Predef.println("true")
+		def m(): Unit = {
+			val s: String = "a string";
+			scala.this.Predef.println("test successful")
+		}
 	}
 }

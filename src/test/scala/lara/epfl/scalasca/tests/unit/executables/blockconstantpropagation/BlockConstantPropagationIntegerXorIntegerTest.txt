@@ -1,13 +1,4 @@
-package <empty> {
-	class BCPIntegerXorIntegerTest extends scala.AnyRef {
-		def <init>() = {
-			super.<init>();
-			()
-		};
-		def m(): Unit = {
-			val a: Int = 10;
-			val b: Int = 5;
-			()
-		}
-	}
-}
+value a
+10
+value b
+5

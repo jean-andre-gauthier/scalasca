@@ -4,6 +4,13 @@ package <empty> {
 			UCRIfElseIfTest.super.<init>();
 			()
 		};
-		def m(): Unit = scala.this.Predef.println("true")
+		def m(): Unit = {
+			def n(): Unit = {
+				val d1: Double = 2.0;
+				val d2: Double = 2.5;
+				scala.this.Predef.println("test successful")
+			};
+			()
+		}
 	}
 }

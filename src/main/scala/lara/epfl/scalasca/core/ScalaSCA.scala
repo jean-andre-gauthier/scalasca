@@ -22,8 +22,8 @@ import scala.tools.nsc.Phase
 import scala.tools.nsc.Settings
 import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.plugins.PluginComponent
-
 import lara.epfl.scalasca.rules._
+import scala.actors.Actor
 
 
 class ScalaSCA(val global: Global) extends Plugin {
@@ -55,15 +55,65 @@ class ScalaSCA(val global: Global) extends Plugin {
 			 * The aim here was not to provide a fully fledged rule factory, but rather to facilitate unit tests
 			 */
 			def runRule(rule: String): Unit = rule match {
-				case "blockconstantpropagation" =>
-					val constProp = new BlockConstantPropagation()(global).apply(unit.body, List())
-					println(constProp.tree)
-				case "unusedcoderemoval" =>
-					val unusedCode = new UnusedCodeRemoval()(global).apply(unit.body, List())
-					println(unusedCode.tree)
+				case "blockconstantpropagation" => testBCP()
+				case "divisionbyzero" => testDBZ()
+				case "doubletripleequals" => testDTE()
+				case "emptyfinally" => testEF()
+				case "publicmutablefields" => testPMF()
+				case "unusedcoderemoval" => testUCR()
+				case "uselessassignment" => testUA()
 				case _ =>
-					new DefaultRule()(global, unit.source.path).apply(unit.body)
+					val res = Rule.apply(global)(unit.body, List(new PublicMutableFields(global)))
+					new ShowWarnings(global, unit.source.path).apply(unit.body, res)
 			}
+
+			def testBCP(): Unit =
+				Rule.apply(global)(unit.body, List(new BlockConstantPropagation(global))) match {
+					case BlockConstantPropagatedTree(map) :: rest => println(map.toList.sortBy(_._1.pos.point).map(p => p._1 + "\n" + (p._2 match { case LiteralImage(l) => l }) + "\n").mkString(""))
+					case _ =>
+				}
+
+			def testDBZ(): Unit =
+				Rule.apply(global)(unit.body, List(new DivisionByZero(global, Rule.apply(global)(unit.body, List(new BlockConstantPropagation(global)))))) match {
+					case DivisionByZeroNodes(zeroNodes) :: rest => printNodes(zeroNodes)
+					case _ =>
+				}
+
+			def testDTE(): Unit =
+				Rule.apply(global)(unit.body, List(new DoubleTripleEquals[global.type, Actor](global))) match {
+					case DoubleTripleEqualsNodes(nodes) :: rest => printSymbols(nodes.asInstanceOf[List[Global#Symbol]])
+					case _ =>
+				}
+
+			def testEF(): Unit =
+				Rule.apply(global)(unit.body, List(new EmptyFinally(global))) match {
+					case EmptyFinallyNodes(nodes) :: rest => printNodes(nodes)
+					case _ =>
+				}
+
+			def testPMF(): Unit =
+				Rule.apply(global)(unit.body, List(new PublicMutableFields(global))) match {
+					case PublicMutableFieldsNodes(nodes) :: rest => printSymbols(nodes.asInstanceOf[List[Global#Symbol]])
+					case _ =>
+				}
+
+			def testUCR(): Unit =
+				Rule.apply(global)(unit.body, List(new UnusedCodeRemoval(global, Rule.apply(global)(unit.body, List(new BlockConstantPropagation(global)))))) match {
+					case (ucb @ UnusedCodeRemovalBlocks(_)) :: rest => println(ucb.getTransformation(global, unit.body))
+					case _ =>
+				}
+
+			def testUA(): Unit =
+				Rule.apply(global)(unit.body, List(new UselessAssignment(global))) match {
+					case UselessAssignmentNodes(nodes) :: rest => printNodes(nodes)
+					case _ =>
+				}
+
+			def printNodes(nodes: List[Global#Position]): Unit =
+				println(nodes.map(p => p.lineContent+"\n"+p.lineCaret+"\n"+p.line+" "+p.column+"\n").mkString(""))
+
+			def printSymbols(nodes: List[Global#Symbol]): Unit =
+				println(nodes.map(n => n.fullName))
 		}
 	}
 

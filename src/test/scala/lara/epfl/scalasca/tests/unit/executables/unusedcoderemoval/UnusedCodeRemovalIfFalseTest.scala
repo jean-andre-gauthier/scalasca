@@ -1,8 +1,11 @@
 class UCRIfFalseTest {
 	def m(): Unit = {
-		if (false)
-			println("false")
+		val s1 = "a string"
+		val s2 = "b string"
+
+		if (s1 == s2)
+			println("test failed")
 		else
-			println("true")
+			println("test successful")
 	}
 }

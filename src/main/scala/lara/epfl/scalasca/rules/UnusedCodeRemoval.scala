@@ -3,7 +3,7 @@ package lara.epfl.scalasca.rules
 import lara.epfl.scalasca.core._
 import scala.tools.nsc._
 
-case class UnusedCodeRemovalTree[T <: Global](tree: T#Tree, nRemovedBlocks: Integer) extends RuleResult {
+case class UnusedCodeRemovalBlocks(blocksToRemove: Map[Global#Position, Global#Tree]) extends RuleResult with TreeTransformer {
 
 	override def warning = Notice("GEN_UNUSED_CODE_REMOVAL",
 			"Removing code that no execution path traverses",
@@ -11,13 +11,29 @@ case class UnusedCodeRemovalTree[T <: Global](tree: T#Tree, nRemovedBlocks: Inte
 			GeneralCategory())
 
 	override def toString: String =
-		if (nRemovedBlocks > 0)
-			warning.formattedWarning + " - " + Console.BLUE + nRemovedBlocks + " unused block(s) removed" + Console.RESET
+		if (blocksToRemove.size > 0)
+			warning.formattedWarning + " - " + Console.BLUE + blocksToRemove.size + " unused block(s) removed" + Console.RESET
 		else
 			warning.formattedDefaultMessage
 
-	override def isSuccess: Boolean = nRemovedBlocks == 0
+	override def isSuccess: Boolean = blocksToRemove.size == 0
+
+	override def getTransformation[T <: Global](global: T, tree: T#Tree): T#Tree = {
+		import global._
+
+		object transformer extends Transformer {
+			override def transform(tree: Tree): Tree = tree match {
+				case q"$t" if blocksToRemove.contains(tree.pos) =>
+					transform(blocksToRemove(tree.pos.asInstanceOf[Position]).asInstanceOf[Tree])
+				case _ =>
+					super.transform(tree)
+			}
+		}
+		transformer.transform(tree.asInstanceOf[Tree])
+	}
 }
+
+case class UnusedCodeRemovalTraversalState(blocksToRemove: Map[Global#Position, Global#Tree]) extends TraversalState
 
 /**
  * GEN_UNUSED_CODE_REMOVAL
@@ -25,35 +41,70 @@ case class UnusedCodeRemovalTree[T <: Global](tree: T#Tree, nRemovedBlocks: Inte
  * Removes dead code
  *
  */
-class UnusedCodeRemoval[T <: Global](implicit global: T) extends Rule[T]()(global) {
+class UnusedCodeRemoval[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends Rule with ConstantPropagationEvaluator {
+
+	type TS = UnusedCodeRemovalTraversalState
+	type RR = UnusedCodeRemovalBlocks
 
 	import global._
 
+	override def getDefaultState(): TS = UnusedCodeRemovalTraversalState(Map())
 
-	private object transformer extends Transformer {
+	private val inputSymbolMap = SymbolMapper.getLiteralMapping(inputResults)
 
-		private var _nRemovedBlocks = 0
-		def nRemovedBlocks = _nRemovedBlocks
-
-		override def transform(tree: Tree): Tree = tree match {
-			case q"if($cond) $thenP else $elseP" => cond match {
-				case q"true" =>
-					_nRemovedBlocks += 1
-					thenP
-				case q"false" =>
-					_nRemovedBlocks += 1
-					elseP
-				case _ =>
-					val newThenP = super.transform(thenP)
-					val newElseP = super.transform(elseP)
-					q"if($cond) $newThenP else $newElseP"
-			}
+	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
+//			case q"$mods def $tname[..$tparams](...$paramss): $tpt = $expr" =>
+//				goto(expr, state.copy(inMethod = Some(tree.symbol)))
+			case q"if($cond) $thenP else $elseP" =>
+				val evaluatedCond =
+					if (inputSymbolMap.isEmpty)
+						cond match {
+							case q"true" => Some(true)
+							case q"false" => Some(false)
+							case _ => None
+						}
+					else
+						evaluateToConstant(cond)(global)(inputSymbolMap) match {
+							case Some(value) if value.isInstanceOf[Boolean] =>
+								Some(value.asInstanceOf[Boolean])
+							case _ => None
+						}
+				evaluatedCond match {
+					case Some(c) if c =>
+						goto(thenP, state.copy(blocksToRemove = state.blocksToRemove + (tree.pos -> thenP)))
+					case Some(c) if !c =>
+						goto(elseP, state.copy(blocksToRemove = state.blocksToRemove + (tree.pos -> elseP)))
+					case _ =>
+						goto(List(cond, thenP, elseP), state)
+				}
+//			case q"while ($cond) $expr" => cond match {
+//				case q"false" =>
+//					goto(Nil, UnusedCodeRemovalTraversalState(state.blocksToRemove + (tree.symbol -> q"")))
+//				case _ =>
+//					goto(List(cond, expr), state)
+//			}
+//			case q"do $expr while ($cond)" => cond match {
+//				case q"false" =>
+//					goto(expr, UnusedCodeRemovalTraversalState(state.blocksToRemove + (tree.symbol -> expr)))
+//				case _ =>
+//					goto(List(expr,cond), state)
+//			}
 			case _ =>
-				super.transform(tree)
+				goto(tree.children, state)
+	}
+
+	override def getRuleResult(state: TS): RR = UnusedCodeRemovalBlocks(state.blocksToRemove)
+
+	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
+		Rule.apply(global)(syntaxTree, List(this)) match {
+			case result :: rest => result match {
+				case p @ UnusedCodeRemovalBlocks(_) => p
+				case _ => UnusedCodeRemovalBlocks(Map())
+			}
+			case _ => UnusedCodeRemovalBlocks(Map())
 		}
 	}
 
-	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): UnusedCodeRemovalTree[T] = {
-		UnusedCodeRemovalTree(transformer.transform(syntaxTree), transformer.nRemovedBlocks)
-	}
+	override def mergeStates(s1: TS, s2: TS): TS =
+			UnusedCodeRemovalTraversalState(s1.blocksToRemove ++ s2.blocksToRemove)
 }

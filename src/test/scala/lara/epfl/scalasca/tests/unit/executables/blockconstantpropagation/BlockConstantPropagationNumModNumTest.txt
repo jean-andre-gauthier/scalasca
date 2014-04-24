@@ -1,19 +1,12 @@
-package <empty> {
-	class BCPNumModNumTest extends scala.AnyRef {
-		def <init>() = {
-			super.<init>();
-			()
-		};
-		def m(): Unit = {
-			val a: Int = 10;
-			val b: Int = 2;
-			val c: Double = 1.0;
-			val d: Double = 12.5;
-			val e: Double = 2.5;
-			val f: Double = 0.0;
-			val g: Int = a.%(0);
-			val h: Double = d.%(0);
-			()
-		}
-	}
-}
+value a
+10
+value b
+2
+value c
+1.0
+value d
+12.5
+value e
+2.5
+value f
+0.0
