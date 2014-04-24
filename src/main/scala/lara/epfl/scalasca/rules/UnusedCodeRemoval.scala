@@ -52,7 +52,7 @@ class UnusedCodeRemoval[T <: Global](val global: T, inputResults: List[RuleResul
 
 	private val inputSymbolMap = SymbolMapper.getLiteralMapping(inputResults)
 
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
 //			case q"$mods def $tname[..$tparams](...$paramss): $tpt = $expr" =>
 //				goto(expr, state.copy(inMethod = Some(tree.symbol)))
 			case q"if($cond) $thenP else $elseP" =>

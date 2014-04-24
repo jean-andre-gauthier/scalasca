@@ -48,34 +48,34 @@ class BlockConstantPropagation[T <: Global](val global: T) extends Rule with Con
 	override def mergeStates(s1: TS, s2: TS): TS =
 			BlockConstantPropagationTraversalState(s1.map ++ s2.map)
 
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
-				case q"package $ref { ..$stats }" =>
-					goto(stats, state)
-				//Ignores class fields
-				case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" => {
-					goto(stats, state, stat => stat match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
-						case _ => false})
-				}
-				//Ignores object fields
-				case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" => {
-					goto(body, state, member => member match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
-						case _ => false})
-				}
-				//Ignores trait fields
-				case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" => {
-					goto(stats, state, stat => stat match {
-						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
-						case _ => false})
-				}
-				//Functions, provided they are more than a mere literal
-				case functionDefinition @ q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => expr match {
-					case Block(_, _) =>
-						goto(expr, state)
-					case _ =>
-						goto(Nil, state)
-				}
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
+//				case q"package $ref { ..$stats }" =>
+//					goto(stats, state)
+//				//Ignores class fields
+//				case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" => {
+//					goto(stats, state, stat => stat match {
+//						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
+//						case _ => false})
+//				}
+//				//Ignores object fields
+//				case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" => {
+//					goto(body, state, member => member match {
+//						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
+//						case _ => false})
+//				}
+//				//Ignores trait fields
+//				case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" => {
+//					goto(stats, state, stat => stat match {
+//						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
+//						case _ => false})
+//				}
+//				//Functions, provided they are more than a mere literal
+//				case functionDefinition @ q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => expr match {
+//					case Block(_, _) =>
+//						goto(expr, state)
+//					case _ =>
+//						goto(Nil, state)
+//				}
 				//Regular if
 				case q"if ($cond) $thenP else $elseP" =>
 					goto(List(cond, thenP, elseP), state)

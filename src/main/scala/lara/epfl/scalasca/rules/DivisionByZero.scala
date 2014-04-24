@@ -57,7 +57,7 @@ class DivisionByZero[T <: Global](val global: T, inputResults: List[RuleResult] 
 
 	private val inputSymbolMap = SymbolMapper.getLiteralMapping(inputResults)
 
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
 			case Apply(Select(rcvr, TermName("$div")), List(denominator)) if rcvr.tpe <:< typeOf[Int] =>
 				val computedDenominator =
 					if (inputSymbolMap.isEmpty)

@@ -54,7 +54,7 @@ class EmptyFinally[T <: Global](val global: T, computedResults: List[RuleResult]
 	override def mergeStates(s1: TS, s2: TS): TS =
 			EmptyFinallyTraversalState((s1.nodes ::: s2.nodes).distinct)
 
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
 			case q"try $exprTry catch $cases finally {}" =>
 				gotoChildren(tree, state.copy(nodes = tree.pos :: state.nodes))
 			case q"try $exprTry finally {}" =>

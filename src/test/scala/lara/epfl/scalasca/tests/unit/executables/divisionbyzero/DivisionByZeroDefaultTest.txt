@@ -1,8 +1,6 @@
-class DivisionByZeroDefaultTest {
-	def m(): Unit = {
-		val z = 10 / 0
-		val a = 10
-		val b = 10 - a
-		val c = 10 / b
-	}
-}
+ val z = 10 / 0
+^
+3 28
+val c = 10 / b
+^
+6 28

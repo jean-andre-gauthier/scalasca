@@ -1,3 +1,4 @@
+//This test checks that matches (which are already transformed in the ref checks phase) are inspected correctly
 class Reg1Test {
 
 	def m(): Unit = {

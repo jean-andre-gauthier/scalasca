@@ -27,7 +27,7 @@ class ShowWarnings[T <: Global](val global: T, source: String) extends Rule {
 	import global._
 
 	override def getRuleResult(state: TS): RR = NoResult()
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = List[(Option[Position], TS)]()
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = Map[Option[Int], TS]()
 	override def getDefaultState(): TS = NoState()
 	override def mergeStates(s1: TS, s2: TS): TS = NoState()
 

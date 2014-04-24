@@ -55,7 +55,7 @@ class PublicMutableFields[T <: Global](val global: T) extends Rule {
 	override def mergeStates(s1: TS, s2: TS): TS =
 			PublicMutableFieldsTraversalState(s1.inMembers || s2.inMembers, (s1.mutableFields ::: s2.mutableFields).distinct)
 
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree.asInstanceOf[Tree] match {
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree.asInstanceOf[Tree] match {
 			case v @ q"$mods var $fileVal: $tpt = $expr"
 				if state.inMembers
 					&& !tree.symbol.asInstanceOf[SymbolContextApiImpl].getter.isPrivate

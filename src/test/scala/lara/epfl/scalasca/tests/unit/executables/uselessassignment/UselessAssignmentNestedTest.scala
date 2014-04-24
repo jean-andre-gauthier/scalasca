@@ -35,3 +35,9 @@ class UANestedTest {
 		}
 	}
 }
+object UANested {
+	val b = 0
+	def m(): Unit = {
+		val a = "useless"
+	}
+}

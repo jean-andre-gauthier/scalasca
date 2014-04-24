@@ -49,7 +49,7 @@ class DoubleTripleEquals[T <: Global, U](val global: T)(implicit tagU: TypeTag[U
 	override def mergeStates(s1: TS, s2: TS): TS =
 			DoubleTripleEqualsTraversalState((s1.nodes ::: s2.nodes).distinct)
 
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree.asInstanceOf[Tree] match {
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree.asInstanceOf[Tree] match {
 		case Apply(Select(a, TermName("$eq$eq$eq")), b :: Nil) if a.tpe <:< typeOf[U] && b.tpe <:< typeOf[U] =>
 			goto(Nil, DoubleTripleEqualsTraversalState(a.symbol :: state.nodes))
 		case _ =>

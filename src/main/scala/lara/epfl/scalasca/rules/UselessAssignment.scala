@@ -47,18 +47,19 @@ class UselessAssignment[T <: Global](val global: T) extends Rule {
 	override def mergeStates(s1: TS, s2: TS): TS =
 			UselessAssignmentTraversalState(s1.currentlyUselessAssignments, s1.uselessAssignments ++ s2.uselessAssignments)
 
-	override def step(tree: Global#Tree, state: TS): List[(Option[Position], TS)] = tree match {
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
 		case q"package $ref { ..$stats }" =>
 			goto(stats, state)
-		//Ignores class fields themselves, but analyses their rhs accordingly
-		case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" =>
-			goto(stats, state)
+//		//Ignores class fields themselves, but analyses their rhs accordingly
+//		case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" =>
+//			goto(stats, state)
 		//Ignores object fields themselves, but analyses their rhs accordingly
-		case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" =>
-			goto(body, state)
-		//Ignores trait fields
-		case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
-			goto(stats, state)
+//		case ClassDef(mods, name, tparams, impl) =>
+//		case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" =>
+//			goto(body, state)
+//		//Ignores trait fields
+//		case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
+//			goto(stats, state)
 		//Ignores secondary constructors
 		case q"$mods def this(...$paramss) = this(..$argss)" =>
 			goto(argss, state)
@@ -70,7 +71,6 @@ class UselessAssignment[T <: Global](val global: T) extends Rule {
 			goto(expr, state.copy(currentlyUselessAssignments = state.currentlyUselessAssignments + (varDef.symbol -> varDef.pos)))
 		//Val
 		case valDef @ q"$mods val $tname: $tpt = $expr" =>
-			println(valDef.id +  " " + expr.id)
 			goto(expr, state.copy(currentlyUselessAssignments = state.currentlyUselessAssignments + (valDef.symbol -> valDef.pos)))
 		case varAssignment @ q"$lhs = $rhs" =>
 			val newState =
@@ -86,8 +86,6 @@ class UselessAssignment[T <: Global](val global: T) extends Rule {
 						state.copy(currentlyUselessAssignments = state.currentlyUselessAssignments + (lhs.symbol -> varAssignment.pos))
 				}
 			goto(rhs, newState)
-		case q"$expr match { case ..$cases }" =>
-			gotoLeaf(state)
 		case anyOther =>
 			state.currentlyUselessAssignments.get(anyOther.symbol) match {
 				case Some(s) =>
@@ -96,6 +94,7 @@ class UselessAssignment[T <: Global](val global: T) extends Rule {
 					gotoChildren(anyOther, state)
 			}
 	}
+
 	override def apply(syntaxTree: Tree, computedResults: List[RuleResult] = List()): RR = {
 		Rule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
