@@ -1,0 +1,1 @@
+List(PublicMutableFieldsClassTest.myField0, PublicMutableFieldsClassTest.myField1, PublicMutableFieldsClassTest.myField1a, PublicMutableFieldsClassTest.myField1b, PublicMutableFieldsClassTest.A1.myField5, PublicMutableFieldsClassTest.A1.myField6, PublicMutableFieldsClassTest.A1.A2.myField10, PublicMutableFieldsClassTest.A2.myField11, PublicMutableFieldsClassTest.A2.myField12)
