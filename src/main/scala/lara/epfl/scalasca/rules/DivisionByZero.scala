@@ -41,12 +41,14 @@ case class DivisionByZeroState(nodes: List[Global#Position]) extends TraversalSt
  *
  * Finds explicit divisions by 0
  */
-class DivisionByZero[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends Rule with ConstantPropagationEvaluator {
+class DivisionByZero[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends ASTRule with ConstantPropagationEvaluator {
 
 	import global._
 
 	type TS = DivisionByZeroState
 	type RR = DivisionByZeroNodes
+
+	override val ruleName = "ARI_DIV_BY_ZERO"
 
 	override def getDefaultState(): TS = DivisionByZeroState(List())
 
@@ -81,7 +83,7 @@ class DivisionByZero[T <: Global](val global: T, inputResults: List[RuleResult] 
 	}
 
 	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
-		Rule.apply(global)(syntaxTree, List(this)) match {
+		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case d @ DivisionByZeroNodes(_) => d
 				case _ => DivisionByZeroNodes(List())

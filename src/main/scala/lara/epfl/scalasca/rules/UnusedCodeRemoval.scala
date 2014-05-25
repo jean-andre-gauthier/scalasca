@@ -41,10 +41,12 @@ case class UnusedCodeRemovalTraversalState(blocksToRemove: Map[Global#Position, 
  * Removes dead code
  *
  */
-class UnusedCodeRemoval[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends Rule with ConstantPropagationEvaluator {
+class UnusedCodeRemoval[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends ASTRule with ConstantPropagationEvaluator {
 
 	type TS = UnusedCodeRemovalTraversalState
 	type RR = UnusedCodeRemovalBlocks
+
+	override val ruleName = "GEN_UNUSED_CODE_REMOVAL"
 
 	import global._
 
@@ -96,7 +98,7 @@ class UnusedCodeRemoval[T <: Global](val global: T, inputResults: List[RuleResul
 	override def getRuleResult(state: TS): RR = UnusedCodeRemovalBlocks(state.blocksToRemove)
 
 	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
-		Rule.apply(global)(syntaxTree, List(this)) match {
+		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case p @ UnusedCodeRemovalBlocks(_) => p
 				case _ => UnusedCodeRemovalBlocks(Map())

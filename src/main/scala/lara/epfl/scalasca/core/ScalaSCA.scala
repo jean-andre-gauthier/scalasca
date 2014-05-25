@@ -24,6 +24,8 @@ import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.plugins.PluginComponent
 import lara.epfl.scalasca.rules._
 import scala.actors.Actor
+import java.io.File
+import java.net.URLClassLoader
 
 
 class ScalaSCA(val global: Global) extends Plugin {
@@ -34,7 +36,9 @@ class ScalaSCA(val global: Global) extends Plugin {
 	val name = "scalasca"
 	val description = "static code analysis checks"
 	val components = List[PluginComponent](Component)
+
 	var testRule: String = ""
+	var rules = List[Rule]()
 
 	private object Component extends PluginComponent {
 		val global: Global = ScalaSCA.this.global
@@ -48,7 +52,14 @@ class ScalaSCA(val global: Global) extends Plugin {
 
 			def apply(unit: CompilationUnit) {
 				this.unit = unit
-				runRule(testRule)
+				if (rules.isEmpty)
+					runRule(testRule)
+				else {
+					val (astRules, standardRules) = rules.partition(rule => rule.isInstanceOf[ASTRule])
+					val standardResults = standardRules.map(rule => rule.apply(unit.body.asInstanceOf[rule.global.Tree], List()))
+					val astResults = ASTRule.apply(global)(unit.body, astRules.asInstanceOf[List[ASTRule]])
+					new ShowWarnings(global, unit.source.path).apply(unit.body, standardResults ::: astResults)
+				}
 			}
 
 			/**
@@ -59,52 +70,58 @@ class ScalaSCA(val global: Global) extends Plugin {
 				case "divisionbyzero" => testDBZ()
 				case "doubletripleequals" => testDTE()
 				case "emptyfinally" => testEF()
+				case "intraproceduralcontrolflowgraph" => testIPCFG()
 				case "publicmutablefields" => testPMF()
 				case "unusedcoderemoval" => testUCR()
 				case "uselessassignment" => testUA()
 				case _ =>
-					val res = Rule.apply(global)(unit.body, List(new PublicMutableFields(global)))
+					val res = ASTRule.apply(global)(unit.body, List(new PublicMutableFields(global)))
 					new ShowWarnings(global, unit.source.path).apply(unit.body, res)
 			}
 
 			def testBCP(): Unit =
-				Rule.apply(global)(unit.body, List(new BlockConstantPropagation(global))) match {
+				ASTRule.apply(global)(unit.body, List(new BlockConstantPropagation(global))) match {
 					case BlockConstantPropagatedTree(map) :: rest => println(map.toList.sortBy(_._1.pos.point).map(p => p._1 + "\n" + (p._2 match { case LiteralImage(l) => l }) + "\n").mkString(""))
 					case _ =>
 				}
 
 			def testDBZ(): Unit =
-				Rule.apply(global)(unit.body, List(new DivisionByZero(global, Rule.apply(global)(unit.body, List(new BlockConstantPropagation(global)))))) match {
+				ASTRule.apply(global)(unit.body, List(new DivisionByZero(global, ASTRule.apply(global)(unit.body, List(new BlockConstantPropagation(global)))))) match {
 					case DivisionByZeroNodes(zeroNodes) :: rest => printNodes(zeroNodes)
 					case _ =>
 				}
 
 			def testDTE(): Unit =
-				Rule.apply(global)(unit.body, List(new DoubleTripleEquals[global.type, Actor](global))) match {
+				ASTRule.apply(global)(unit.body, List(new DoubleTripleEquals[global.type, Actor](global))) match {
 					case DoubleTripleEqualsNodes(nodes) :: rest => printSymbols(nodes.asInstanceOf[List[Global#Symbol]])
 					case _ =>
 				}
 
 			def testEF(): Unit =
-				Rule.apply(global)(unit.body, List(new EmptyFinally(global))) match {
+				ASTRule.apply(global)(unit.body, List(new EmptyFinally(global))) match {
 					case EmptyFinallyNodes(nodes) :: rest => printNodes(nodes)
 					case _ =>
 				}
 
+			def testIPCFG(): Unit =
+				new ShowWarnings(global, unit.source.path).apply(
+					unit.body,
+					List(new IntraProceduralControlFlowGraphGenerator(global).apply(unit.body, List())))
+
 			def testPMF(): Unit =
-				Rule.apply(global)(unit.body, List(new PublicMutableFields(global))) match {
+				ASTRule.apply(global)(unit.body, List(new PublicMutableFields(global))) match {
 					case PublicMutableFieldsNodes(nodes) :: rest => printSymbols(nodes.asInstanceOf[List[Global#Symbol]])
 					case _ =>
 				}
 
 			def testUCR(): Unit =
-				Rule.apply(global)(unit.body, List(new UnusedCodeRemoval(global, Rule.apply(global)(unit.body, List(new BlockConstantPropagation(global)))))) match {
+				ASTRule.apply(global)(unit.body, List(new UnusedCodeRemoval(global, ASTRule.apply(global)(unit.body, List(new BlockConstantPropagation(global)))))) match {
 					case (ucb @ UnusedCodeRemovalBlocks(_)) :: rest => println(ucb.getTransformation(global, unit.body))
 					case _ =>
 				}
 
 			def testUA(): Unit =
-				Rule.apply(global)(unit.body, List(new UselessAssignment(global))) match {
+				ASTRule.apply(global)(unit.body, List(new UselessAssignment(global))) match {
 					case UselessAssignmentNodes(nodes) :: rest => printNodes(nodes)
 					case _ =>
 				}
@@ -117,11 +134,48 @@ class ScalaSCA(val global: Global) extends Plugin {
 		}
 	}
 
+	private def loadRules(f: File): List[Rule] =
+		try {
+			val c = new URLClassLoader(Array(f.toURI.toURL)).loadClass("ScalaSCAPlugin")
+			val loadedRules = c.getMethod("createRules", global.getClass()).invoke(c.newInstance(), global)
+			loadedRules.asInstanceOf[List[Rule]]
+		}
+		catch {
+			case e: Exception =>
+				e.printStackTrace()
+				println("Skipping " + f.getName() + ": not a valid ScalaSCA plugin")
+				List()
+		}
+
 	override def processOptions(options: List[String], error: String => Unit) {
 		for (option <- options) {
 			if (option.startsWith("testRule:")) {
 				testRule = option.substring(9)
-			} else {
+			} else if (option.startsWith("d:") || option.startsWith("f:")) {
+				val personalRules =
+					if (option.startsWith("d:")) {
+						val directory = new File(option.substring(2))
+						if (directory.isDirectory())
+							directory.listFiles().filter(_.getName.endsWith(".jar")).flatMap(f => loadRules(f)).toList
+						else {
+							error("Argument for d: is not a directory: " + directory.getName())
+							List[Rule]()
+						}
+					}
+					else if (option.startsWith("f:")) {
+						val file = new File(option.substring(2))
+						if (file.isFile())
+							loadRules(file)
+						else {
+							error("Argument for d: is not a file: " + file.getName())
+							List[Rule]()
+						}
+					}
+					else
+						List[Rule]()
+				rules = personalRules
+			}
+			else {
 				error("Option not understood: " + option)
 			}
 		}

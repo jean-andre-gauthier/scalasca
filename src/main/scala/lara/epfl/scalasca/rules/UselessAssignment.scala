@@ -33,33 +33,32 @@ case class UselessAssignmentTraversalState(currentlyUselessAssignments: Map[Glob
  * TODO
  * 		- How to generalise to fields?
  */
-class UselessAssignment[T <: Global](val global: T) extends Rule {
+class UselessAssignment[T <: Global](val global: T) extends ASTRule {
 
 	import global._
 
 	type TS = UselessAssignmentTraversalState
 	type RR = UselessAssignmentNodes
 
+	override val ruleName = "ASS_USELESS_ASSIGNMENT"
+
 	override def getDefaultState(): TS = UselessAssignmentTraversalState(Map(), Map())
 
-	override def getRuleResult(state: TS): RR = UselessAssignmentNodes((state.currentlyUselessAssignments.values.toList ::: state.uselessAssignments.values.toList.flatten).distinct.sortBy(_.point))
+	override def getRuleResult(state: TS): RR = UselessAssignmentNodes((state.currentlyUselessAssignments.values.toList ::: state.uselessAssignments.values.toList.flatten).distinct.filter(_.isDefined).sortBy(_.point))
 
 	override def mergeStates(s1: TS, s2: TS): TS =
 			UselessAssignmentTraversalState(s1.currentlyUselessAssignments, s1.uselessAssignments ++ s2.uselessAssignments)
 
-	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
+	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = { println(tree); tree match {
 		case q"package $ref { ..$stats }" =>
 			goto(stats, state)
-//		//Ignores class fields themselves, but analyses their rhs accordingly
-//		case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" =>
-//			goto(stats, state)
-		//Ignores object fields themselves, but analyses their rhs accordingly
-//		case ClassDef(mods, name, tparams, impl) =>
-//		case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" =>
-//			goto(body, state)
-//		//Ignores trait fields
-//		case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
-//			goto(stats, state)
+		case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" =>
+			goto(body, state)
+		case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" =>
+			goto(stats, state)
+		//Ignores trait fields
+		case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
+			goto(stats, state)
 		//Ignores secondary constructors
 		case q"$mods def this(...$paramss) = this(..$argss)" =>
 			goto(argss, state)
@@ -93,10 +92,10 @@ class UselessAssignment[T <: Global](val global: T) extends Rule {
 				case None =>
 					gotoChildren(anyOther, state)
 			}
-	}
+	} }
 
 	override def apply(syntaxTree: Tree, computedResults: List[RuleResult] = List()): RR = {
-		Rule.apply(global)(syntaxTree, List(this)) match {
+		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case u @ UselessAssignmentNodes(_) => u
 				case _ => UselessAssignmentNodes(List())

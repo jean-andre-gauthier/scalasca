@@ -1,5 +1,7 @@
 name := "ScalaSCA"
 
+organization := "lara.epfl"
+
 version := "0.1"
 
 scalaVersion := "2.11.0"

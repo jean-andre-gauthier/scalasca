@@ -40,12 +40,14 @@ case class EmptyFinallyTraversalState(nodes: List[Global#Position]) extends Trav
  *
  * Finds empty finally blocks
  */
-class EmptyFinally[T <: Global](val global: T, computedResults: List[RuleResult] = List()) extends Rule {
+class EmptyFinally[T <: Global](val global: T, computedResults: List[RuleResult] = List()) extends ASTRule {
 
 	import global._
 
 	type TS = EmptyFinallyTraversalState
 	type RR = EmptyFinallyNodes
+
+	override val ruleName = "BLK_EMPTY_FINALLY"
 
 	override def getDefaultState(): TS = EmptyFinallyTraversalState(List())
 
@@ -64,7 +66,7 @@ class EmptyFinally[T <: Global](val global: T, computedResults: List[RuleResult]
 	}
 
 	def apply(syntaxTree: Tree, computedResults: List[RuleResult] = List()): RR = {
-		Rule.apply(global)(syntaxTree, List(this)) match {
+		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case e @ EmptyFinallyNodes(_) => e
 				case _ => EmptyFinallyNodes(List())

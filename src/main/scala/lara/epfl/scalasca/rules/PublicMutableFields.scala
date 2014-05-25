@@ -41,12 +41,14 @@ case class PublicMutableFieldsTraversalState(inMembers: Boolean, mutableFields: 
  * Detects public mutable fields in classes, objects or traits
  *
  */
-class PublicMutableFields[T <: Global](val global: T) extends Rule {
+class PublicMutableFields[T <: Global](val global: T) extends ASTRule {
 
 	import global._
 
 	type TS = PublicMutableFieldsTraversalState
 	type RR = PublicMutableFieldsNodes
+
+	override val ruleName = "CLS_PUBLIC_MUTABLE_FIELDS"
 
 	override def getDefaultState(): TS = PublicMutableFieldsTraversalState(false, List())
 
@@ -60,7 +62,7 @@ class PublicMutableFields[T <: Global](val global: T) extends Rule {
 				if state.inMembers
 					&& !tree.symbol.asInstanceOf[SymbolContextApiImpl].getter.isPrivate
 					&& !tree.symbol.asInstanceOf[SymbolContextApiImpl].setter.isPrivate =>
-				goto(expr.children, PublicMutableFieldsTraversalState(false, tree.symbol :: state.mutableFields))
+				gotoChildren(expr, PublicMutableFieldsTraversalState(false, tree.symbol :: state.mutableFields))
 			case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" =>
 				goto(stats, state.copy(inMembers = true))
 			case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" =>
@@ -68,11 +70,11 @@ class PublicMutableFields[T <: Global](val global: T) extends Rule {
 			case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
 				goto(stats, state.copy(inMembers = true))
 			case anyOther =>
-				goto(tree.children, state.copy(inMembers = false))
+				gotoChildren(anyOther, state.copy(inMembers = false))
 	}
 
 	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
-		Rule.apply(global)(syntaxTree, List(this)) match {
+		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case p @ PublicMutableFieldsNodes(_) => p
 				case _ => PublicMutableFieldsNodes(List())

@@ -32,12 +32,14 @@ case class BlockConstantPropagatedTree(symbolTable: Map[Global#Symbol, SymbolIma
 
 case class BlockConstantPropagationTraversalState(map: Map[Global#Symbol, Any]) extends TraversalState
 
-class BlockConstantPropagation[T <: Global](val global: T) extends Rule with ConstantPropagationEvaluator {
+class BlockConstantPropagation[T <: Global](val global: T) extends ASTRule with ConstantPropagationEvaluator {
 
 	import global._
 
 	type TS = BlockConstantPropagationTraversalState
 	type RR = BlockConstantPropagatedTree
+
+	override val ruleName = "GEN_BLOCK_CONST_PROP"
 
 	override def getRuleResult(state: TS): RR = BlockConstantPropagatedTree(state.map.map({
 		case (k, v) => (k, LiteralImage(v))
@@ -116,7 +118,7 @@ class BlockConstantPropagation[T <: Global](val global: T) extends Rule with Con
 	}
 
 	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
-		Rule.apply(global)(syntaxTree, List(this)) match {
+		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case b @ BlockConstantPropagatedTree(_) => b
 				case _ => BlockConstantPropagatedTree(Map())

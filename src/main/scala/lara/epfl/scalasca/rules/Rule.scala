@@ -17,22 +17,40 @@ package lara.epfl.scalasca.rules
 import lara.epfl.scalasca.core._
 import scala.tools.nsc._
 
-object Rule {
 
-	def apply[T <: Global](global: T)(tree: T#Tree, rules: List[Rule], debug: Boolean = false): List[RuleResult] = {
+abstract class Rule {
 
-		val rulePositions = scala.collection.mutable.Map[Rule, Map[Option[Int], Rule#TS]]()
+	type RR <: RuleResult
+
+	val ruleName: String
+
+	val global: Global
+	import global._
+
+	def apply(syntaxTree: Tree, results: List[RuleResult]): RR
+
+}
+
+abstract class StandardRule extends Rule
+
+object ASTRule {
+	type TT = Global#Tree
+
+	def apply[T <: Global](global: T)(tree: TT, rules: List[ASTRule], debug: Boolean = false): List[RuleResult] = {
+		val rulePositions = scala.collection.mutable.Map[ASTRule, Map[Option[Int], ASTRule#TS]]()
 		for (rule <- rules) {
-			rulePositions += (rule -> Map(Some(tree.id) -> rule.getDefaultState()))
+			rulePositions += (rule -> Map(Some(tree.hashCode()) -> rule.getDefaultState()))
 		}
 
-		def traverse(treeNode: T#Tree): Unit = {
+		def traverse(treeNode: TT): Unit = {
+//			println(rulePositions)
 			for (rule <- rules) {
 				val currentNode = treeNode.asInstanceOf[rule.global.Tree]
-				val currentNodePosition = treeNode.id
-
-				rulePositions(rule).get(Some(currentNodePosition)) match {
+				val currentNodeIdentifier = treeNode.hashCode()
+//				println(currentNodeHashCode)
+				rulePositions(rule).get(Some(currentNodeIdentifier)) match {
 					case Some(s) =>
+//					  println("s " + currentNodeHashCode)
 						val currentState = rulePositions(rule).get(None) match {
 							case Some(leafState) =>
 								rule.mergeStates(leafState.asInstanceOf[rule.TS], s.asInstanceOf[rule.TS])
@@ -40,8 +58,10 @@ object Rule {
 								s
 						}
 						val steppedPositionMap = rule.step(currentNode, currentState.asInstanceOf[rule.TS])
-						rulePositions += (rule -> ((rulePositions(rule) - (None, Some(currentNodePosition))) ++ steppedPositionMap))
+						rulePositions += (rule -> ((rulePositions(rule) - (None, Some(currentNodeIdentifier))) ++ steppedPositionMap))
+//					  println("c " + rulePositions(rule))
 					case None =>
+//					  println("sn " + currentNodeHashCode)
 				}
 			}
 			treeNode.children.foreach(t => traverse(t))
@@ -52,31 +72,26 @@ object Rule {
 	}
 }
 
-abstract class Rule {
+abstract class ASTRule extends Rule {
 
 	type TS <: TraversalState
-	type RR <: RuleResult
+	type TT = Global#Tree
 
-	val global: Global
-	import global._
+	def step(tree: TT, state: TS): Map[Option[Int], TS]
 
-	def apply(syntaxTree: Tree, results: List[RuleResult]): RR
-
-	def step(tree: Global#Tree, state: TS): Map[Option[Int], TS]
-
-	def goto(tree: Global#Tree, state: TS): Map[Option[Int], TS] =
-		if (!tree.isEmpty && tree.pos.isDefined){
-			Map((Some(tree.id) -> state))}
-		else
+	def goto(tree: TT, state: TS): Map[Option[Int], TS] =
+			Map((Some(tree.hashCode()) -> state))
+	def goto(trees: List[TT], state: TS, condition: TT => Boolean = _ => true): Map[Option[Int], TS] = trees.filter(condition) match {
+		case Nil =>
 			Map(None -> state)
-	def goto(trees: List[Global#Tree], state: TS, condition: Global#Tree => Boolean = _ => true): Map[Option[Int], TS] = trees.filter(condition).filter(t => !t.isEmpty && t.pos.isDefined) match {
-		case Nil => Map(None -> state)
 		case fTrees =>
-			fTrees.foldLeft(Map[Option[Int], TS]())((acc, t) => acc + (Some(t.id) -> state))
+			fTrees.foldLeft(Map[Option[Int], TS]())((acc, t) => acc + (Some(t.hashCode()) -> state))
 	}
-	def gotoChildren(tree: Global#Tree, state: TS): Map[Option[Int], TS] =
+	def goto(treesStates: List[(TT, TS)], condition: TT => Boolean): Map[Option[Int], TS] =
+		treesStates.foldLeft(Map[Option[Int], TS]())((acc, ts) => acc ++ (if (condition(ts._1)) goto(ts._1, ts._2) else Map()))
+	def gotoChildren(tree: TT, state: TS): Map[Option[Int], TS] =
 		goto(tree.children, state)
-	def gotoChildren(trees: List[Global#Tree], state: TS, condition: Global#Tree => Boolean = _ => true): Map[Option[Int], TS] =
+	def gotoChildren(trees: List[TT], state: TS, condition: TT => Boolean = _ => true): Map[Option[Int], TS] =
 		goto(trees.flatMap(_.children), state, condition)
 	def gotoLeaf(state: TS) = goto(Nil, state)
 
