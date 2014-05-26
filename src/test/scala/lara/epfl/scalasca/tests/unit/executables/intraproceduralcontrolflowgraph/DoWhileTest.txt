@@ -1,0 +1,93 @@
+Method m:
+Entry nodes:
+> MethodDef(def m(): Unit = doWhile$1(){
+{
+scala.this.Predef.println("still not 84");
+DoWhileTest.this.i_=(DoWhileTest.this.i.+(1))
+};
+if (DoWhileTest.this.i.<(84))
+doWhile$1()
+else
+()
+})
+Inner nodes:
+> ExprNode("still not 84")
+Prev:
+Label(doWhile$1(){
+{
+scala.this.Predef.println("still not 84");
+DoWhileTest.this.i_=(DoWhileTest.this.i.+(1))
+};
+if (DoWhileTest.this.i.<(84))
+doWhile$1()
+else
+()
+})
+Succ:
+MethodCall(scala.this.Predef.println("still not 84"),Set(),Set())
+> ExprNode(1)
+Prev:
+MethodCall(scala.this.Predef.println("still not 84"),Set(),Set())
+Succ:
+MethodCall(DoWhileTest.this.i.+(1),Set(),Set())
+> ExprNode(84)
+Prev:
+MethodCall(DoWhileTest.this.i_=(DoWhileTest.this.i.+(1)),Set(),Set())
+Succ:
+MethodCall(DoWhileTest.this.i.<(84),Set(),Set())
+> MethodCall(DoWhileTest.this.i.+(1),Set(),Set())
+Prev:
+ExprNode(1)
+Succ:
+MethodCall(DoWhileTest.this.i_=(DoWhileTest.this.i.+(1)),Set(),Set())
+> MethodCall(DoWhileTest.this.i.<(84),Set(),Set())
+Prev:
+ExprNode(84)
+Succ:
+Label(doWhile$1(){
+{
+scala.this.Predef.println("still not 84");
+DoWhileTest.this.i_=(DoWhileTest.this.i.+(1))
+};
+if (DoWhileTest.this.i.<(84))
+doWhile$1()
+else
+()
+})
+ExprNode(())
+> MethodCall(DoWhileTest.this.i_=(DoWhileTest.this.i.+(1)),Set(),Set())
+Prev:
+MethodCall(DoWhileTest.this.i.+(1),Set(),Set())
+Succ:
+ExprNode(84)
+> Label(doWhile$1(){
+{
+scala.this.Predef.println("still not 84");
+DoWhileTest.this.i_=(DoWhileTest.this.i.+(1))
+};
+if (DoWhileTest.this.i.<(84))
+doWhile$1()
+else
+()
+})
+Prev:
+MethodDef(def m(): Unit = doWhile$1(){
+{
+scala.this.Predef.println("still not 84");
+DoWhileTest.this.i_=(DoWhileTest.this.i.+(1))
+};
+if (DoWhileTest.this.i.<(84))
+doWhile$1()
+else
+()
+})
+MethodCall(DoWhileTest.this.i.<(84),Set(),Set())
+Succ:
+ExprNode("still not 84")
+> MethodCall(scala.this.Predef.println("still not 84"),Set(),Set())
+Prev:
+ExprNode("still not 84")
+Succ:
+ExprNode(1)
+Exit nodes:
+> ExprNode(())

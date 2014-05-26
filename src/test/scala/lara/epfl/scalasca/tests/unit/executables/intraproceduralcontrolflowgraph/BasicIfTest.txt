@@ -1,0 +1,250 @@
+Method c1:
+Entry nodes:
+> MethodDef(def c1(): Unit = if (BasicIfTest.this.b.==(2))
+scala.this.Predef.println("Stuff")
+else
+())
+Inner nodes:
+> ExprNode("Stuff")
+Prev:
+MethodCall(BasicIfTest.this.b.==(2),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Stuff"),Set(),Set())
+> ExprNode(2)
+Prev:
+MethodDef(def c1(): Unit = if (BasicIfTest.this.b.==(2))
+scala.this.Predef.println("Stuff")
+else
+())
+Succ:
+MethodCall(BasicIfTest.this.b.==(2),Set(),Set())
+> MethodCall(BasicIfTest.this.b.==(2),Set(),Set())
+Prev:
+ExprNode(2)
+Succ:
+ExprNode("Stuff")
+ExprNode(())
+Exit nodes:
+> ExprNode(())
+> MethodCall(scala.this.Predef.println("Stuff"),Set(),Set())
+Method C:
+Entry nodes:
+> MethodDef(<stable> private def C: BasicIfTest.this.C.type = {
+BasicIfTest.this.C$module = new BasicIfTest.this.C.type();
+BasicIfTest.this.C$module
+})
+Inner nodes:
+> ExprNode(BasicIfTest.this.C$module = new BasicIfTest.this.C.type())
+Prev:
+MethodDef(<stable> private def C: BasicIfTest.this.C.type = {
+BasicIfTest.this.C$module = new BasicIfTest.this.C.type();
+BasicIfTest.this.C$module
+})
+Succ:
+ExprNode(BasicIfTest.this.C$module)
+Exit nodes:
+> ExprNode(BasicIfTest.this.C$module)
+Method m:
+Entry nodes:
+> MethodDef(def m(): Int = {
+val d: Int = if (if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicIfTest.this.a.+(BasicIfTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicIfTest.this.a.*(BasicIfTest.this.b)
+};
+if (d.==(20))
+{
+scala.this.Predef.println("Some Last Stuff");
+return d.+(21)
+}
+else
+();
+d.+(22)
+})
+Inner nodes:
+> ExprNode("Other Stuff")
+Prev:
+MethodCall(if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Other Stuff"),Set(),Set())
+> ExprNode("Some Last Stuff")
+Prev:
+MethodCall(d.==(20),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Some Last Stuff"),Set(),Set())
+> ExprNode("Some More Stuff")
+Prev:
+MethodCall(if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Some More Stuff"),Set(),Set())
+> ExprNode(())
+Prev:
+MethodCall(d.==(20),Set(),Set())
+Succ:
+ExprNode(22)
+> ExprNode(2)
+Prev:
+MethodDef(def m(): Int = {
+val d: Int = if (if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicIfTest.this.a.+(BasicIfTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicIfTest.this.a.*(BasicIfTest.this.b)
+};
+if (d.==(20))
+{
+scala.this.Predef.println("Some Last Stuff");
+return d.+(21)
+}
+else
+();
+d.+(22)
+})
+Succ:
+MethodCall(if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2),Set(),Set())
+> ExprNode(20)
+Prev:
+ValueDef(val d: Int = if (if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicIfTest.this.a.+(BasicIfTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicIfTest.this.a.*(BasicIfTest.this.b)
+})
+Succ:
+MethodCall(d.==(20),Set(),Set())
+> ExprNode(21)
+Prev:
+MethodCall(scala.this.Predef.println("Some Last Stuff"),Set(),Set())
+Succ:
+MethodCall(d.+(21),Set(),Set())
+> ExprNode(22)
+Prev:
+ExprNode(())
+Succ:
+MethodCall(d.+(22),Set(),Set())
+> MethodCall(BasicIfTest.this.a.*(BasicIfTest.this.b),Set(),Set())
+Prev:
+ExprNode(BasicIfTest.this.b)
+Succ:
+ValueDef(val d: Int = if (if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicIfTest.this.a.+(BasicIfTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicIfTest.this.a.*(BasicIfTest.this.b)
+})
+> MethodCall(BasicIfTest.this.a.+(BasicIfTest.this.b),Set(),Set())
+Prev:
+ExprNode(BasicIfTest.this.b)
+Succ:
+ValueDef(val d: Int = if (if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicIfTest.this.a.+(BasicIfTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicIfTest.this.a.*(BasicIfTest.this.b)
+})
+> ExprNode(BasicIfTest.this.b)
+Prev:
+MethodCall(scala.this.Predef.println("Some More Stuff"),Set(),Set())
+Succ:
+MethodCall(BasicIfTest.this.a.*(BasicIfTest.this.b),Set(),Set())
+> ExprNode(BasicIfTest.this.b)
+Prev:
+MethodCall(scala.this.Predef.println("Other Stuff"),Set(),Set())
+Succ:
+MethodCall(BasicIfTest.this.a.+(BasicIfTest.this.b),Set(),Set())
+> MethodCall(d.==(20),Set(),Set())
+Prev:
+ExprNode(20)
+Succ:
+ExprNode("Some Last Stuff")
+ExprNode(())
+> MethodCall(if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2),Set(),Set())
+Prev:
+ExprNode(2)
+Succ:
+ExprNode("Other Stuff")
+ExprNode("Some More Stuff")
+> MethodCall(scala.this.Predef.println("Other Stuff"),Set(),Set())
+Prev:
+ExprNode("Other Stuff")
+Succ:
+ExprNode(BasicIfTest.this.b)
+> MethodCall(scala.this.Predef.println("Some Last Stuff"),Set(),Set())
+Prev:
+ExprNode("Some Last Stuff")
+Succ:
+ExprNode(21)
+> MethodCall(scala.this.Predef.println("Some More Stuff"),Set(),Set())
+Prev:
+ExprNode("Some More Stuff")
+Succ:
+ExprNode(BasicIfTest.this.b)
+> ValueDef(val d: Int = if (if (BasicIfTest.this.b.==(2))
+3
+else
+4.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicIfTest.this.a.+(BasicIfTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicIfTest.this.a.*(BasicIfTest.this.b)
+})
+Prev:
+MethodCall(BasicIfTest.this.a.+(BasicIfTest.this.b),Set(),Set())
+MethodCall(BasicIfTest.this.a.*(BasicIfTest.this.b),Set(),Set())
+Succ:
+ExprNode(20)
+Exit nodes:
+> MethodCall(d.+(21),Set(),Set())
+> MethodCall(d.+(22),Set(),Set())

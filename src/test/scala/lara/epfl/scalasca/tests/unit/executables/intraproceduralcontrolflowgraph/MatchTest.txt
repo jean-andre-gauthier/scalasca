@@ -1,0 +1,307 @@
+Method m:
+Entry nodes:
+> MethodDef(def m(): Unit = {
+val option: Option[Int] = new Some[Int](41);
+{
+case <synthetic> val x1: Option[Int] = option;
+case6(){
+if (x1.isInstanceOf[Some[Int]])
+{
+<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]);
+{
+val o: Int = x2.x;
+matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")))
+}
+}
+else
+case7()
+};
+case7(){
+if (scala.None.==(x1))
+matchEnd5(scala.this.Predef.println("Nothing"))
+else
+case8()
+};
+case8(){
+matchEnd5(throw new MatchError(x1))
+};
+matchEnd5(x: Unit){
+x
+}
+}
+})
+> MethodCall(matchEnd5(throw new MatchError(x1)),Set(),Set())
+Inner nodes:
+> ExprNode("43")
+Prev:
+MethodCall(o.==(42),Set(),Set())
+Succ:
+MethodCall(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44"),Set(),Set())
+> ExprNode("44")
+Prev:
+MethodCall(o.==(42),Set(),Set())
+Succ:
+MethodCall(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44"),Set(),Set())
+> ExprNode("Nothing")
+Prev:
+MethodCall(scala.None.==(x1),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Nothing"),Set(),Set())
+> ExprNode((x1.asInstanceOf[Some[Int]]: Some[Int]))
+Prev:
+ExprNode(x1.isInstanceOf[Some[Int]])
+Succ:
+ValueDef(<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]))
+> ExprNode(42)
+Prev:
+ValueDef(val o: Int = x2.x)
+Succ:
+MethodCall(o.==(42),Set(),Set())
+> ValueDef(<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]))
+Prev:
+ExprNode((x1.asInstanceOf[Some[Int]]: Some[Int]))
+Succ:
+ExprNode(x2.x)
+> ValueDef(case <synthetic> val x1: Option[Int] = option)
+Prev:
+ExprNode(option)
+Succ:
+Label(case6(){
+if (x1.isInstanceOf[Some[Int]])
+{
+<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]);
+{
+val o: Int = x2.x;
+matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")))
+}
+}
+else
+case7()
+})
+> Label(case6(){
+if (x1.isInstanceOf[Some[Int]])
+{
+<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]);
+{
+val o: Int = x2.x;
+matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")))
+}
+}
+else
+case7()
+})
+Prev:
+ValueDef(case <synthetic> val x1: Option[Int] = option)
+Succ:
+ExprNode(x1.isInstanceOf[Some[Int]])
+> Label(case7(){
+if (scala.None.==(x1))
+matchEnd5(scala.this.Predef.println("Nothing"))
+else
+case8()
+})
+Prev:
+ExprNode(x1.isInstanceOf[Some[Int]])
+Succ:
+ExprNode(x1)
+> Label(case8(){
+matchEnd5(throw new MatchError(x1))
+})
+Prev:
+MethodCall(scala.None.==(x1),Set(),Set())
+Succ:
+ExprNode(new MatchError(x1))
+> MethodCall(matchEnd5(scala.this.Predef.println("Nothing")),Set(),Set())
+Prev:
+MethodCall(scala.this.Predef.println("Nothing"),Set(),Set())
+Succ:
+Label(matchEnd5(x: Unit){
+x
+})
+> MethodCall(matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44"))),Set(),Set())
+Prev:
+MethodCall(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")),Set(),Set())
+Succ:
+Label(matchEnd5(x: Unit){
+x
+})
+> Label(matchEnd5(x: Unit){
+x
+})
+Prev:
+MethodCall(matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44"))),Set(),Set())
+MethodCall(matchEnd5(scala.this.Predef.println("Nothing")),Set(),Set())
+MethodCall(matchEnd5(throw new MatchError(x1)),Set(),Set())
+Succ:
+ExprNode(x)
+> ExprNode(new MatchError(x1))
+Prev:
+Label(case8(){
+matchEnd5(throw new MatchError(x1))
+})
+Succ:
+ThrowNode(throw new MatchError(x1))
+> ExprNode(new Some[Int](41))
+Prev:
+MethodDef(def m(): Unit = {
+val option: Option[Int] = new Some[Int](41);
+{
+case <synthetic> val x1: Option[Int] = option;
+case6(){
+if (x1.isInstanceOf[Some[Int]])
+{
+<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]);
+{
+val o: Int = x2.x;
+matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")))
+}
+}
+else
+case7()
+};
+case7(){
+if (scala.None.==(x1))
+matchEnd5(scala.this.Predef.println("Nothing"))
+else
+case8()
+};
+case8(){
+matchEnd5(throw new MatchError(x1))
+};
+matchEnd5(x: Unit){
+x
+}
+}
+})
+Succ:
+ValueDef(val option: Option[Int] = new Some[Int](41))
+> MethodCall(o.==(42),Set(),Set())
+Prev:
+ExprNode(42)
+Succ:
+ExprNode("43")
+ExprNode("44")
+> ExprNode(option)
+Prev:
+ValueDef(val option: Option[Int] = new Some[Int](41))
+Succ:
+ValueDef(case <synthetic> val x1: Option[Int] = option)
+> MethodCall(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44"),Set(),Set())
+Prev:
+ExprNode("43")
+ExprNode("44")
+Succ:
+MethodCall(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")),Set(),Set())
+> MethodCall(scala.None.==(x1),Set(),Set())
+Prev:
+ExprNode(x1)
+Succ:
+ExprNode("Nothing")
+Label(case8(){
+matchEnd5(throw new MatchError(x1))
+})
+> MethodCall(scala.this.Predef.println("Nothing"),Set(),Set())
+Prev:
+ExprNode("Nothing")
+Succ:
+MethodCall(matchEnd5(scala.this.Predef.println("Nothing")),Set(),Set())
+> MethodCall(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")),Set(),Set())
+Prev:
+MethodCall(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44"),Set(),Set())
+Succ:
+MethodCall(matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44"))),Set(),Set())
+> ValueDef(val o: Int = x2.x)
+Prev:
+ExprNode(x2.x)
+Succ:
+ExprNode(42)
+> ValueDef(val option: Option[Int] = new Some[Int](41))
+Prev:
+ExprNode(new Some[Int](41))
+Succ:
+ExprNode(option)
+> ExprNode(x1)
+Prev:
+Label(case7(){
+if (scala.None.==(x1))
+matchEnd5(scala.this.Predef.println("Nothing"))
+else
+case8()
+})
+Succ:
+MethodCall(scala.None.==(x1),Set(),Set())
+> ExprNode(x1.isInstanceOf[Some[Int]])
+Prev:
+Label(case6(){
+if (x1.isInstanceOf[Some[Int]])
+{
+<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]);
+{
+val o: Int = x2.x;
+matchEnd5(scala.this.Predef.println(option.getOrElse[Any](if (o.==(42))
+"43"
+else
+"44")))
+}
+}
+else
+case7()
+})
+Succ:
+ExprNode((x1.asInstanceOf[Some[Int]]: Some[Int]))
+Label(case7(){
+if (scala.None.==(x1))
+matchEnd5(scala.this.Predef.println("Nothing"))
+else
+case8()
+})
+> ExprNode(x2.x)
+Prev:
+ValueDef(<synthetic> val x2: Some[Int] = (x1.asInstanceOf[Some[Int]]: Some[Int]))
+Succ:
+ValueDef(val o: Int = x2.x)
+Exit nodes:
+> ThrowNode(throw new MatchError(x1))
+> ExprNode(x)

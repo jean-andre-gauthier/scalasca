@@ -1,0 +1,91 @@
+Method m:
+Entry nodes:
+> MethodDef(def m(): Int = {
+try {
+scala.this.Predef.println("Didnt catch exception");
+scala.this.Predef.println("Still idnt catch exception")
+} catch {
+case (e @ (_: Exception)) => scala.this.Predef.println("General exception")
+} finally {
+scala.this.Predef.println("Inside Finally");
+scala.this.Predef.println("Still Inside Finally")
+};
+200
+})
+Inner nodes:
+> CatchNode()
+Prev:
+ExprNode("Didnt catch exception")
+MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+ExprNode("Still idnt catch exception")
+MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+Succ:
+ExprNode("General exception")
+> ExprNode("Didnt catch exception")
+Prev:
+MethodDef(def m(): Int = {
+try {
+scala.this.Predef.println("Didnt catch exception");
+scala.this.Predef.println("Still idnt catch exception")
+} catch {
+case (e @ (_: Exception)) => scala.this.Predef.println("General exception")
+} finally {
+scala.this.Predef.println("Inside Finally");
+scala.this.Predef.println("Still Inside Finally")
+};
+200
+})
+Succ:
+CatchNode()
+MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+> ExprNode("General exception")
+Prev:
+CatchNode()
+Succ:
+MethodCall(scala.this.Predef.println("General exception"),Set(),Set())
+> ExprNode("Inside Finally")
+Prev:
+MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+MethodCall(scala.this.Predef.println("General exception"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Inside Finally"),Set(),Set())
+> ExprNode("Still Inside Finally")
+Prev:
+MethodCall(scala.this.Predef.println("Inside Finally"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Still Inside Finally"),Set(),Set())
+> ExprNode("Still idnt catch exception")
+Prev:
+MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+Succ:
+CatchNode()
+MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+> MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+Prev:
+ExprNode("Didnt catch exception")
+Succ:
+CatchNode()
+ExprNode("Still idnt catch exception")
+> MethodCall(scala.this.Predef.println("General exception"),Set(),Set())
+Prev:
+ExprNode("General exception")
+Succ:
+ExprNode("Inside Finally")
+> MethodCall(scala.this.Predef.println("Inside Finally"),Set(),Set())
+Prev:
+ExprNode("Inside Finally")
+Succ:
+ExprNode("Still Inside Finally")
+> MethodCall(scala.this.Predef.println("Still Inside Finally"),Set(),Set())
+Prev:
+ExprNode("Still Inside Finally")
+Succ:
+ExprNode(200)
+> MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+Prev:
+ExprNode("Still idnt catch exception")
+Succ:
+CatchNode()
+ExprNode("Inside Finally")
+Exit nodes:
+> ExprNode(200)

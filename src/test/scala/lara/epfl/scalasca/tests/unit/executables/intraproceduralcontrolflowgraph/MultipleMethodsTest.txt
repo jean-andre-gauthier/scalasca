@@ -1,0 +1,127 @@
+Method m:
+Entry nodes:
+> MethodDef(def m(): Int = {
+try {
+scala.this.Predef.println("MultipleMethodsTest m1")
+} catch {
+case (e @ (_: Exception)) => {
+scala.this.Predef.println("MultipleMethodsTest m2");
+scala.this.Predef.println("MultipleMethodsTest m3");
+return 42
+}
+} finally scala.this.Predef.println("MultipleMethodsTest m4");
+123
+})
+Inner nodes:
+> CatchNode()
+Prev:
+ExprNode("MultipleMethodsTest m1")
+MethodCall(scala.this.Predef.println("MultipleMethodsTest m1"),Set(),Set())
+Succ:
+ExprNode("MultipleMethodsTest m2")
+> ExprNode("MultipleMethodsTest m1")
+Prev:
+MethodDef(def m(): Int = {
+try {
+scala.this.Predef.println("MultipleMethodsTest m1")
+} catch {
+case (e @ (_: Exception)) => {
+scala.this.Predef.println("MultipleMethodsTest m2");
+scala.this.Predef.println("MultipleMethodsTest m3");
+return 42
+}
+} finally scala.this.Predef.println("MultipleMethodsTest m4");
+123
+})
+Succ:
+CatchNode()
+MethodCall(scala.this.Predef.println("MultipleMethodsTest m1"),Set(),Set())
+> ExprNode("MultipleMethodsTest m2")
+Prev:
+CatchNode()
+Succ:
+MethodCall(scala.this.Predef.println("MultipleMethodsTest m2"),Set(),Set())
+> ExprNode("MultipleMethodsTest m3")
+Prev:
+MethodCall(scala.this.Predef.println("MultipleMethodsTest m2"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("MultipleMethodsTest m3"),Set(),Set())
+> ExprNode("MultipleMethodsTest m4")
+Prev:
+MethodCall(scala.this.Predef.println("MultipleMethodsTest m1"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("MultipleMethodsTest m4"),Set(),Set())
+> MethodCall(scala.this.Predef.println("MultipleMethodsTest m1"),Set(),Set())
+Prev:
+ExprNode("MultipleMethodsTest m1")
+Succ:
+CatchNode()
+ExprNode("MultipleMethodsTest m4")
+> MethodCall(scala.this.Predef.println("MultipleMethodsTest m2"),Set(),Set())
+Prev:
+ExprNode("MultipleMethodsTest m2")
+Succ:
+ExprNode("MultipleMethodsTest m3")
+> MethodCall(scala.this.Predef.println("MultipleMethodsTest m3"),Set(),Set())
+Prev:
+ExprNode("MultipleMethodsTest m3")
+Succ:
+ExprNode(42)
+> MethodCall(scala.this.Predef.println("MultipleMethodsTest m4"),Set(),Set())
+Prev:
+ExprNode("MultipleMethodsTest m4")
+Succ:
+ExprNode(123)
+Exit nodes:
+> ExprNode(123)
+> ExprNode(42)
+Method n:
+Entry nodes:
+> MethodDef(def n(): Unit = {
+var i: Int = 0;
+if (i.<(1))
+scala.this.Predef.println("MultipleMethodsTest n1")
+else
+scala.this.Predef.println("MultipleMethodsTest n2")
+})
+Inner nodes:
+> ExprNode("MultipleMethodsTest n1")
+Prev:
+MethodCall(i.<(1),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("MultipleMethodsTest n1"),Set(),Set())
+> ExprNode("MultipleMethodsTest n2")
+Prev:
+MethodCall(i.<(1),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("MultipleMethodsTest n2"),Set(),Set())
+> ExprNode(0)
+Prev:
+MethodDef(def n(): Unit = {
+var i: Int = 0;
+if (i.<(1))
+scala.this.Predef.println("MultipleMethodsTest n1")
+else
+scala.this.Predef.println("MultipleMethodsTest n2")
+})
+Succ:
+VariableDef(var i: Int = 0)
+> ExprNode(1)
+Prev:
+VariableDef(var i: Int = 0)
+Succ:
+MethodCall(i.<(1),Set(),Set())
+> MethodCall(i.<(1),Set(),Set())
+Prev:
+ExprNode(1)
+Succ:
+ExprNode("MultipleMethodsTest n1")
+ExprNode("MultipleMethodsTest n2")
+> VariableDef(var i: Int = 0)
+Prev:
+ExprNode(0)
+Succ:
+ExprNode(1)
+Exit nodes:
+> MethodCall(scala.this.Predef.println("MultipleMethodsTest n1"),Set(),Set())
+> MethodCall(scala.this.Predef.println("MultipleMethodsTest n2"),Set(),Set())

@@ -1,0 +1,518 @@
+[1msrc/test/scala/lara/epfl/scalasca/tests/unit/executables/intraproceduralcontrolflowgraph/BasicTryTest.scala
+Method c1:
+Entry nodes:
+> MethodDef(def c1(): Unit = if (BasicTryTest.this.b.==(2))
+scala.this.Predef.println("Stuff")
+else
+())
+Inner nodes:
+> ExprNode("Stuff")
+Prev:
+MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Stuff"),Set(),Set())
+> MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+Prev:
+ExprNode(2)
+Succ:
+ExprNode("Stuff")
+ExprNode(())
+> ExprNode(2)
+Prev:
+MethodDef(def c1(): Unit = if (BasicTryTest.this.b.==(2))
+scala.this.Predef.println("Stuff")
+else
+())
+Succ:
+MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+Exit nodes:
+> MethodCall(scala.this.Predef.println("Stuff"),Set(),Set())
+> ExprNode(())
+Method C:
+Entry nodes:
+> ExprNode(BasicTryTest.this.C$module)
+> MethodDef(<stable> private def C: BasicTryTest.this.C.type = {
+BasicTryTest.this.C$module = new BasicTryTest.this.C.type();
+BasicTryTest.this.C$module
+})
+Inner nodes:
+> AssignNode(BasicTryTest.this.C$module = new BasicTryTest.this.C.type())
+Prev:
+ExprNode(BasicTryTest.this.C$module)
+Succ:
+ExprNode(BasicTryTest.this.C$module)
+Exit nodes:
+> MethodDef(<stable> private def C: BasicTryTest.this.C.type = {
+BasicTryTest.this.C$module = new BasicTryTest.this.C.type();
+BasicTryTest.this.C$module
+})
+> ExprNode(BasicTryTest.this.C$module)
+Method m:
+Entry nodes:
+> ThrowNode(throw new scala.`package`.Exception())
+> MethodDef(def m(): Int = {
+try {
+val d: Int = if (BasicTryTest.this.b.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicTryTest.this.a.+(BasicTryTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicTryTest.this.a.*(BasicTryTest.this.b)
+};
+try {
+scala.this.Predef.println("Throwing exception");
+if (BasicTryTest.this.a.>(2))
+throw new scala.`package`.Exception()
+else
+scala.this.Predef.println("Actually not throwing exception")
+} finally {
+scala.this.Predef.println("Didnt catch exception");
+scala.this.Predef.println("Still idnt catch exception")
+};
+if (d.==(20))
+{
+scala.this.Predef.println("Some Last Stuff");
+return d.+(21)
+}
+else
+();
+d.+(22)
+} catch {
+case (a @ (_: ArithmeticException)) => scala.this.Predef.println("Arithmetic exception")
+case (r @ (_: RuntimeException)) => scala.this.Predef.println("Runtime exception")
+case (e @ (_: Exception)) => scala.this.Predef.println("General exception")
+} finally {
+scala.this.Predef.println("Inside Finally");
+scala.this.Predef.println("Still Inside Finally")
+};
+scala.this.Predef.println("Outside all tries");
+200
+})
+Inner nodes:
+> MethodCall(scala.this.Predef.println("General exception"),Set(),Set())
+Prev:
+ExprNode("General exception")
+Succ:
+ExprNode("Inside Finally")
+> ExprNode("Throwing exception")
+Prev:
+ValueDef(val d: Int = if (BasicTryTest.this.b.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicTryTest.this.a.+(BasicTryTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicTryTest.this.a.*(BasicTryTest.this.b)
+})
+Succ:
+MethodCall(scala.this.Predef.println("Throwing exception"),Set(),Set())
+CatchNode()
+> ExprNode("Still idnt catch exception")
+Prev:
+MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+CatchNode()
+> ExprNode(2)
+Prev:
+MethodCall(scala.this.Predef.println("Throwing exception"),Set(),Set())
+Succ:
+MethodCall(BasicTryTest.this.a.>(2),Set(),Set())
+CatchNode()
+> MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+Prev:
+ExprNode(2)
+Succ:
+CatchNode()
+ExprNode("Some More Stuff")
+ExprNode("Other Stuff")
+> ExprNode(())
+Prev:
+MethodCall(d.==(20),Set(),Set())
+Succ:
+CatchNode()
+ExprNode(22)
+> MethodCall(BasicTryTest.this.a.*(BasicTryTest.this.b),Set(),Set())
+Prev:
+ExprNode(BasicTryTest.this.b)
+Succ:
+CatchNode()
+ValueDef(val d: Int = if (BasicTryTest.this.b.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicTryTest.this.a.+(BasicTryTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicTryTest.this.a.*(BasicTryTest.this.b)
+})
+> MethodCall(scala.this.Predef.println("Throwing exception"),Set(),Set())
+Prev:
+ExprNode("Throwing exception")
+Succ:
+ExprNode(2)
+CatchNode()
+> MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+Prev:
+ExprNode("Didnt catch exception")
+Succ:
+ExprNode("Still idnt catch exception")
+CatchNode()
+> ExprNode("Still Inside Finally")
+Prev:
+MethodCall(scala.this.Predef.println("Inside Finally"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Still Inside Finally"),Set(),Set())
+> ExprNode("Runtime exception")
+Prev:
+CatchNode()
+Succ:
+MethodCall(scala.this.Predef.println("Runtime exception"),Set(),Set())
+> MethodCall(scala.this.Predef.println("Actually not throwing exception"),Set(),Set())
+Prev:
+ExprNode("Actually not throwing exception")
+Succ:
+CatchNode()
+ExprNode("Didnt catch exception")
+> ExprNode("Arithmetic exception")
+Prev:
+CatchNode()
+Succ:
+MethodCall(scala.this.Predef.println("Arithmetic exception"),Set(),Set())
+> ExprNode(2)
+Prev:
+MethodDef(def m(): Int = {
+try {
+val d: Int = if (BasicTryTest.this.b.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicTryTest.this.a.+(BasicTryTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicTryTest.this.a.*(BasicTryTest.this.b)
+};
+try {
+scala.this.Predef.println("Throwing exception");
+if (BasicTryTest.this.a.>(2))
+throw new scala.`package`.Exception()
+else
+scala.this.Predef.println("Actually not throwing exception")
+} finally {
+scala.this.Predef.println("Didnt catch exception");
+scala.this.Predef.println("Still idnt catch exception")
+};
+if (d.==(20))
+{
+scala.this.Predef.println("Some Last Stuff");
+return d.+(21)
+}
+else
+();
+d.+(22)
+} catch {
+case (a @ (_: ArithmeticException)) => scala.this.Predef.println("Arithmetic exception")
+case (r @ (_: RuntimeException)) => scala.this.Predef.println("Runtime exception")
+case (e @ (_: Exception)) => scala.this.Predef.println("General exception")
+} finally {
+scala.this.Predef.println("Inside Finally");
+scala.this.Predef.println("Still Inside Finally")
+};
+scala.this.Predef.println("Outside all tries");
+200
+})
+Succ:
+MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+CatchNode()
+> MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+Prev:
+ExprNode("Still idnt catch exception")
+Succ:
+CatchNode()
+ExprNode(20)
+> ExprNode("General exception")
+Prev:
+CatchNode()
+Succ:
+MethodCall(scala.this.Predef.println("General exception"),Set(),Set())
+> MethodCall(BasicTryTest.this.a.>(2),Set(),Set())
+Prev:
+ExprNode(2)
+Succ:
+CatchNode()
+ExprNode("Actually not throwing exception")
+> CatchNode()
+Prev:
+ExprNode("Throwing exception")
+ThrowNode(throw new scala.`package`.Exception())
+ExprNode("Still idnt catch exception")
+ExprNode(2)
+MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+ExprNode(())
+MethodCall(BasicTryTest.this.a.*(BasicTryTest.this.b),Set(),Set())
+MethodCall(scala.this.Predef.println("Throwing exception"),Set(),Set())
+MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+MethodCall(scala.this.Predef.println("Actually not throwing exception"),Set(),Set())
+ExprNode(2)
+MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+MethodCall(BasicTryTest.this.a.>(2),Set(),Set())
+ExprNode("Actually not throwing exception")
+ExprNode("Some More Stuff")
+MethodCall(d.==(20),Set(),Set())
+ValueDef(val d: Int = if (BasicTryTest.this.b.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicTryTest.this.a.+(BasicTryTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicTryTest.this.a.*(BasicTryTest.this.b)
+})
+ExprNode(BasicTryTest.this.b)
+MethodCall(d.+(22),Set(),Set())
+ExprNode("Didnt catch exception")
+ExprNode(20)
+ExprNode("Some Last Stuff")
+MethodCall(BasicTryTest.this.a.+(BasicTryTest.this.b),Set(),Set())
+ExprNode(21)
+ExprNode(BasicTryTest.this.b)
+MethodCall(scala.this.Predef.println("Other Stuff"),Set(),Set())
+ExprNode("Other Stuff")
+MethodCall(scala.this.Predef.println("Some More Stuff"),Set(),Set())
+MethodCall(d.+(21),Set(),Set())
+ExprNode(22)
+MethodCall(scala.this.Predef.println("Some Last Stuff"),Set(),Set())
+Succ:
+ExprNode("Runtime exception")
+ExprNode("Arithmetic exception")
+ExprNode("General exception")
+> ExprNode("Actually not throwing exception")
+Prev:
+MethodCall(BasicTryTest.this.a.>(2),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Actually not throwing exception"),Set(),Set())
+CatchNode()
+> ExprNode("Some More Stuff")
+Prev:
+MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+Succ:
+CatchNode()
+MethodCall(scala.this.Predef.println("Some More Stuff"),Set(),Set())
+> MethodCall(scala.this.Predef.println("Still Inside Finally"),Set(),Set())
+Prev:
+ExprNode("Still Inside Finally")
+Succ:
+ExprNode("Outside all tries")
+> MethodCall(d.==(20),Set(),Set())
+Prev:
+ExprNode(20)
+Succ:
+ExprNode(())
+CatchNode()
+ExprNode("Some Last Stuff")
+> ValueDef(val d: Int = if (BasicTryTest.this.b.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicTryTest.this.a.+(BasicTryTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicTryTest.this.a.*(BasicTryTest.this.b)
+})
+Prev:
+MethodCall(BasicTryTest.this.a.*(BasicTryTest.this.b),Set(),Set())
+MethodCall(BasicTryTest.this.a.+(BasicTryTest.this.b),Set(),Set())
+Succ:
+ExprNode("Throwing exception")
+CatchNode()
+> MethodCall(scala.this.Predef.println("Inside Finally"),Set(),Set())
+Prev:
+ExprNode("Inside Finally")
+Succ:
+ExprNode("Still Inside Finally")
+> MethodCall(scala.this.Predef.println("Runtime exception"),Set(),Set())
+Prev:
+ExprNode("Runtime exception")
+Succ:
+ExprNode("Inside Finally")
+> ExprNode(BasicTryTest.this.b)
+Prev:
+MethodCall(scala.this.Predef.println("Some More Stuff"),Set(),Set())
+Succ:
+MethodCall(BasicTryTest.this.a.*(BasicTryTest.this.b),Set(),Set())
+CatchNode()
+> MethodCall(d.+(22),Set(),Set())
+Prev:
+ExprNode(22)
+Succ:
+CatchNode()
+ExprNode("Inside Finally")
+> ExprNode("Didnt catch exception")
+Prev:
+MethodCall(scala.this.Predef.println("Actually not throwing exception"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Didnt catch exception"),Set(),Set())
+CatchNode()
+> ExprNode(20)
+Prev:
+MethodCall(scala.this.Predef.println("Still idnt catch exception"),Set(),Set())
+Succ:
+CatchNode()
+MethodCall(d.==(20),Set(),Set())
+> ExprNode("Outside all tries")
+Prev:
+MethodCall(scala.this.Predef.println("Still Inside Finally"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Outside all tries"),Set(),Set())
+> ExprNode("Some Last Stuff")
+Prev:
+MethodCall(d.==(20),Set(),Set())
+Succ:
+CatchNode()
+MethodCall(scala.this.Predef.println("Some Last Stuff"),Set(),Set())
+> ExprNode("Inside Finally")
+Prev:
+MethodCall(scala.this.Predef.println("General exception"),Set(),Set())
+MethodCall(scala.this.Predef.println("Runtime exception"),Set(),Set())
+MethodCall(d.+(22),Set(),Set())
+MethodCall(scala.this.Predef.println("Arithmetic exception"),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("Inside Finally"),Set(),Set())
+> MethodCall(BasicTryTest.this.a.+(BasicTryTest.this.b),Set(),Set())
+Prev:
+ExprNode(BasicTryTest.this.b)
+Succ:
+CatchNode()
+ValueDef(val d: Int = if (BasicTryTest.this.b.==(2))
+{
+scala.this.Predef.println("Other Stuff");
+BasicTryTest.this.a.+(BasicTryTest.this.b)
+}
+else
+{
+scala.this.Predef.println("Some More Stuff");
+BasicTryTest.this.a.*(BasicTryTest.this.b)
+})
+> MethodCall(scala.this.Predef.println("Outside all tries"),Set(),Set())
+Prev:
+ExprNode("Outside all tries")
+Succ:
+ExprNode(200)
+> ExprNode(21)
+Prev:
+MethodCall(scala.this.Predef.println("Some Last Stuff"),Set(),Set())
+Succ:
+CatchNode()
+MethodCall(d.+(21),Set(),Set())
+> ExprNode(BasicTryTest.this.b)
+Prev:
+MethodCall(scala.this.Predef.println("Other Stuff"),Set(),Set())
+Succ:
+CatchNode()
+MethodCall(BasicTryTest.this.a.+(BasicTryTest.this.b),Set(),Set())
+> MethodCall(scala.this.Predef.println("Other Stuff"),Set(),Set())
+Prev:
+ExprNode("Other Stuff")
+Succ:
+CatchNode()
+ExprNode(BasicTryTest.this.b)
+> ExprNode("Other Stuff")
+Prev:
+MethodCall(BasicTryTest.this.b.==(2),Set(),Set())
+Succ:
+CatchNode()
+MethodCall(scala.this.Predef.println("Other Stuff"),Set(),Set())
+> MethodCall(scala.this.Predef.println("Arithmetic exception"),Set(),Set())
+Prev:
+ExprNode("Arithmetic exception")
+Succ:
+ExprNode("Inside Finally")
+> MethodCall(scala.this.Predef.println("Some More Stuff"),Set(),Set())
+Prev:
+ExprNode("Some More Stuff")
+Succ:
+CatchNode()
+ExprNode(BasicTryTest.this.b)
+> MethodCall(d.+(21),Set(),Set())
+Prev:
+ExprNode(21)
+Succ:
+CatchNode()
+> ExprNode(22)
+Prev:
+ExprNode(())
+Succ:
+CatchNode()
+MethodCall(d.+(22),Set(),Set())
+> MethodCall(scala.this.Predef.println("Some Last Stuff"),Set(),Set())
+Prev:
+ExprNode("Some Last Stuff")
+Succ:
+CatchNode()
+ExprNode(21)
+Exit nodes:
+> ExprNode(200)
+
+Produced errors:
+
+Expected output:
+class BasicTryTest {
+private val a = 0
+private var b = 1
+private object C {
+def c1(): Unit = {
+if (b == 2) {
+println("Stuff")
+}
+}
+}
+def m(): Int = {
+try {
+val d =
+if (b == 2) {
+println("Other Stuff")
+a + b
+}
+else {
+println("Some More Stuff")
+a * b
+}
+try {
+println("Throwing exception")
+throw new Exception()
+}
+finally {
+println("Didnt catch exception")
+println("Still idnt catch exception")
+}
+if (d == 20) {
+println("Some Last Stuff")
+return d + 21
+}
+d + 22
+}
+catch {
+case a: ArithmeticException =>
+println("Arithmetic exception")
+case r: RuntimeException =>
+println("Runtime exception")
+case e: Exception =>
+println("General exception")
+}
+finally {
+println("Inside Finally")
+println("Still Inside Finally")
+}
+println("Outside all tries")
+200
+}
+}

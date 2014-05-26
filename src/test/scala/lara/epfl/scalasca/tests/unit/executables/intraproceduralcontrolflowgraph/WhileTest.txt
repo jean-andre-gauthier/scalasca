@@ -1,0 +1,150 @@
+Method m:
+Entry nodes:
+> MethodDef(def m(): Unit = while$1(){
+if (WhileTest.this.i.<(42))
+{
+{
+if (WhileTest.this.i.%(2).==(0))
+scala.this.Predef.println("even")
+else
+();
+scala.this.Predef.println("still not 42");
+WhileTest.this.i_=(WhileTest.this.i.+(1))
+};
+while$1()
+}
+else
+()
+})
+Inner nodes:
+> ExprNode("even")
+Prev:
+MethodCall(WhileTest.this.i.%(2).==(0),Set(),Set())
+Succ:
+MethodCall(scala.this.Predef.println("even"),Set(),Set())
+> ExprNode("still not 42")
+Prev:
+MethodCall(scala.this.Predef.println("even"),Set(),Set())
+ExprNode(())
+Succ:
+MethodCall(scala.this.Predef.println("still not 42"),Set(),Set())
+> ExprNode(())
+Prev:
+MethodCall(WhileTest.this.i.%(2).==(0),Set(),Set())
+Succ:
+ExprNode("still not 42")
+> ExprNode(0)
+Prev:
+MethodCall(WhileTest.this.i.<(42),Set(),Set())
+Succ:
+MethodCall(WhileTest.this.i.%(2).==(0),Set(),Set())
+> ExprNode(1)
+Prev:
+MethodCall(scala.this.Predef.println("still not 42"),Set(),Set())
+Succ:
+MethodCall(WhileTest.this.i.+(1),Set(),Set())
+> ExprNode(42)
+Prev:
+Label(while$1(){
+if (WhileTest.this.i.<(42))
+{
+{
+if (WhileTest.this.i.%(2).==(0))
+scala.this.Predef.println("even")
+else
+();
+scala.this.Predef.println("still not 42");
+WhileTest.this.i_=(WhileTest.this.i.+(1))
+};
+while$1()
+}
+else
+()
+})
+Succ:
+MethodCall(WhileTest.this.i.<(42),Set(),Set())
+> MethodCall(WhileTest.this.i.%(2).==(0),Set(),Set())
+Prev:
+ExprNode(0)
+Succ:
+ExprNode("even")
+ExprNode(())
+> MethodCall(WhileTest.this.i.+(1),Set(),Set())
+Prev:
+ExprNode(1)
+Succ:
+MethodCall(WhileTest.this.i_=(WhileTest.this.i.+(1)),Set(),Set())
+> MethodCall(WhileTest.this.i.<(42),Set(),Set())
+Prev:
+ExprNode(42)
+Succ:
+ExprNode(0)
+ExprNode(())
+> MethodCall(WhileTest.this.i_=(WhileTest.this.i.+(1)),Set(),Set())
+Prev:
+MethodCall(WhileTest.this.i.+(1),Set(),Set())
+Succ:
+Label(while$1(){
+if (WhileTest.this.i.<(42))
+{
+{
+if (WhileTest.this.i.%(2).==(0))
+scala.this.Predef.println("even")
+else
+();
+scala.this.Predef.println("still not 42");
+WhileTest.this.i_=(WhileTest.this.i.+(1))
+};
+while$1()
+}
+else
+()
+})
+> MethodCall(scala.this.Predef.println("even"),Set(),Set())
+Prev:
+ExprNode("even")
+Succ:
+ExprNode("still not 42")
+> MethodCall(scala.this.Predef.println("still not 42"),Set(),Set())
+Prev:
+ExprNode("still not 42")
+Succ:
+ExprNode(1)
+> Label(while$1(){
+if (WhileTest.this.i.<(42))
+{
+{
+if (WhileTest.this.i.%(2).==(0))
+scala.this.Predef.println("even")
+else
+();
+scala.this.Predef.println("still not 42");
+WhileTest.this.i_=(WhileTest.this.i.+(1))
+};
+while$1()
+}
+else
+()
+})
+Prev:
+MethodDef(def m(): Unit = while$1(){
+if (WhileTest.this.i.<(42))
+{
+{
+if (WhileTest.this.i.%(2).==(0))
+scala.this.Predef.println("even")
+else
+();
+scala.this.Predef.println("still not 42");
+WhileTest.this.i_=(WhileTest.this.i.+(1))
+};
+while$1()
+}
+else
+()
+})
+MethodCall(WhileTest.this.i_=(WhileTest.this.i.+(1)),Set(),Set())
+Succ:
+ExprNode(42)
+Exit nodes:
+> ExprNode(())
