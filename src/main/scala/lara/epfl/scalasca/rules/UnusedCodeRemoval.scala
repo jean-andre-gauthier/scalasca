@@ -54,7 +54,7 @@ class UnusedCodeRemoval[T <: Global](val global: T, inputResults: List[RuleResul
 
 	private val inputSymbolMap = SymbolMapper.getLiteralMapping(inputResults)
 
-	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
+	override def step(tree: Global#Tree, state: TS): List[(Option[TT], TS)] = tree match {
 //			case q"$mods def $tname[..$tparams](...$paramss): $tpt = $expr" =>
 //				goto(expr, state.copy(inMethod = Some(tree.symbol)))
 			case q"if($cond) $thenP else $elseP" =>
@@ -79,25 +79,13 @@ class UnusedCodeRemoval[T <: Global](val global: T, inputResults: List[RuleResul
 					case _ =>
 						goto(List(cond, thenP, elseP), state)
 				}
-//			case q"while ($cond) $expr" => cond match {
-//				case q"false" =>
-//					goto(Nil, UnusedCodeRemovalTraversalState(state.blocksToRemove + (tree.symbol -> q"")))
-//				case _ =>
-//					goto(List(cond, expr), state)
-//			}
-//			case q"do $expr while ($cond)" => cond match {
-//				case q"false" =>
-//					goto(expr, UnusedCodeRemovalTraversalState(state.blocksToRemove + (tree.symbol -> expr)))
-//				case _ =>
-//					goto(List(expr,cond), state)
-//			}
 			case _ =>
 				goto(tree.children, state)
 	}
 
 	override def getRuleResult(state: TS): RR = UnusedCodeRemovalBlocks(state.blocksToRemove)
 
-	override def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
+	override def apply(syntaxTree: Tree): RR = {
 		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case p @ UnusedCodeRemovalBlocks(_) => p

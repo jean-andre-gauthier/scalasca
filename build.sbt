@@ -18,6 +18,8 @@ libraryDependencies ++= Seq(
 	"org.scala-sbt" % "test-interface" % "1.0"
 )
 
+scalacOptions += "-Xplugin:scalasca_2.11-0.1.jar"
+
 lazy val buildSettings = Seq(
 	version := "0.1-SNAPSHOT",
 	scalaVersion := "2.11.0"

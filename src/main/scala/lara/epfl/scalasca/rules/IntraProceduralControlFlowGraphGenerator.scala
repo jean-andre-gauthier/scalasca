@@ -3,7 +3,7 @@ package lara.epfl.scalasca.rules
 import lara.epfl.scalasca.core._
 import scala.tools.nsc._
 
-case class IntraProceduralControlFlowGraphMap(map: Map[Global#Symbol, ControlFlowGraph]) extends RuleResult {
+case class IntraProceduralControlFlowGraphMap(methodCFGMap: Map[Global#Symbol, ControlFlowGraph]) extends RuleResult {
 
 	override def warning = Warning("GEN_CFG_GENERATOR_INTRA",
 		"Generating Control Flow Graph",
@@ -16,10 +16,10 @@ case class IntraProceduralControlFlowGraphMap(map: Map[Global#Symbol, ControlFlo
 		else
 			warning.formattedDefaultMessage
 
-	override def isSuccess: Boolean = false
+	override def isSuccess: Boolean = map.size != 0
 }
 
-class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T) extends StandardRule {
+class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends StandardRule {
 
 	import global._
 
@@ -37,7 +37,7 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T) exten
 		previousNodes: List[ControlFlowGraphNode]
 	)
 
-	def apply(tree: Tree, results: List[RuleResult]): RR = {
+	def apply(tree: Tree): RR = {
 
 		def getUpdatedGraph(newNode: ControlFlowGraphNode, newNodePreviousNodes: List[ControlFlowGraphNode], ts: TraversalState): ControlFlowGraph =
 			if (ts.currentCatch.isEmpty)
@@ -131,21 +131,21 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T) exten
 				}
 
 
-			case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" if ts.currentMethod.isEmpty =>
+			case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" if ts.currentMethod.isEmpty && !body.isEmpty =>
 //				println("ObjectDef")
 				val firstStatTraversal = traverse(body.head, ts)
 				val blockTraversal = body.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
 				(firstStatTraversal._1, blockTraversal._2)
 
 
-			case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty =>
+			case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty && !stats.isEmpty =>
 //				println("ClassDef")
 				val firstStatTraversal = traverse(stats.head, ts)
 				val blockTraversal = stats.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
 				(firstStatTraversal._1, blockTraversal._2)
 
 
-			case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty =>
+			case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty && !stats.isEmpty =>
 //				println("TraitDef")
 				val firstStatTraversal = traverse(stats.head, ts)
 				val blockTraversal = stats.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
@@ -155,7 +155,12 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T) exten
 			case m @ q"$expr(...$exprss)" if !ts.currentMethod.isEmpty && exprss.size > 0 =>
 //				println("exprss " + tree)
 				val flatExprss = exprss.flatten
-				val newNode = MethodCall(m, Set(), Set())
+				val newNode = expr match {
+					case "$target.$method" =>
+						MethodCall(m, Set(target.symbol), expr)
+					case _ =>
+						MethodCall(m, Set(), expr)
+				}
 				val exprssTraversal =
 					if (!flatExprss.isEmpty) {
 						val firstExprssTraversal = traverse(flatExprss.head, ts)

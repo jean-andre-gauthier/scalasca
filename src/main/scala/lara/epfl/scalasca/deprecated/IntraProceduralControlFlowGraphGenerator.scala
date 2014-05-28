@@ -71,7 +71,7 @@ package lara.epfl.scalasca.deprecated
 //			stateWithLabels.copy(functionToGraph = s1.functionToGraph ++ s2.functionToGraph)
 //	}
 //
-//	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree match {
+//	override def step(tree: Global#Tree, state: TS): List[(Option[TT], TS)] = tree match {
 //		case m @ q"$mods def $tname[..$tparams](...$paramss): $tpt = $expr" =>
 //			goto(expr, state.copy(currentMethod = Some(m.symbol), funGraphMap = state.functionToGraph + (m.symbol -> new ControlFlowGraph().withNode(MethodDef(m)))))
 //

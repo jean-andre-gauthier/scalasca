@@ -33,7 +33,7 @@ case class UselessAssignmentTraversalState(currentlyUselessAssignments: Map[Glob
  * TODO
  * 		- How to generalise to fields?
  */
-class UselessAssignment[T <: Global](val global: T) extends ASTRule {
+class UselessAssignment[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends ASTRule {
 
 	import global._
 
@@ -49,7 +49,7 @@ class UselessAssignment[T <: Global](val global: T) extends ASTRule {
 	override def mergeStates(s1: TS, s2: TS): TS =
 			UselessAssignmentTraversalState(s1.currentlyUselessAssignments, s1.uselessAssignments ++ s2.uselessAssignments)
 
-	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = { println(tree); tree match {
+	override def step(tree: Global#Tree, state: TS): List[(Option[TT], TS)] = { println(tree); tree match {
 		case q"package $ref { ..$stats }" =>
 			goto(stats, state)
 		case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" =>
@@ -94,7 +94,7 @@ class UselessAssignment[T <: Global](val global: T) extends ASTRule {
 			}
 	} }
 
-	override def apply(syntaxTree: Tree, computedResults: List[RuleResult] = List()): RR = {
+	override def apply(syntaxTree: Tree): RR = {
 		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case u @ UselessAssignmentNodes(_) => u

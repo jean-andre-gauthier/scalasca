@@ -51,14 +51,15 @@ class ScalaSCA(val global: Global) extends Plugin {
 			var unit: CompilationUnit = _
 
 			def apply(unit: CompilationUnit) {
+				println("SCALASCA Plugin")
 				this.unit = unit
 				if (rules.isEmpty)
 					runRule(testRule)
 				else {
 					val (astRules, standardRules) = rules.partition(rule => rule.isInstanceOf[ASTRule])
-					val standardResults = standardRules.map(rule => rule.apply(unit.body.asInstanceOf[rule.global.Tree], List()))
+					val standardResults = standardRules.map(rule => rule.apply(unit.body.asInstanceOf[rule.global.Tree]))
 					val astResults = ASTRule.apply(global)(unit.body, astRules.asInstanceOf[List[ASTRule]])
-					new ShowWarnings(global, unit.source.path).apply(unit.body, standardResults ::: astResults)
+					new ShowWarnings(global, unit.source.path, standardResults ::: astResults).apply(unit.body)
 				}
 			}
 
@@ -75,13 +76,12 @@ class ScalaSCA(val global: Global) extends Plugin {
 				case "unusedcoderemoval" => testUCR()
 				case "uselessassignment" => testUA()
 				case _ =>
-					val res = ASTRule.apply(global)(unit.body, List(new PublicMutableFields(global)))
-					new ShowWarnings(global, unit.source.path).apply(unit.body, res)
+					new DefaultRule(global, rule, List()).apply(unit.body)
 			}
 
 			def testBCP(): Unit =
 				ASTRule.apply(global)(unit.body, List(new BlockConstantPropagation(global))) match {
-					case BlockConstantPropagatedTree(map) :: rest => println(map.toList.sortBy(_._1.pos.point).map(p => p._1 + "\n" + (p._2 match { case LiteralImage(l) => l }) + "\n").mkString(""))
+					case BlockConstantPropagationMapper(map) :: rest => println(map.toList.sortBy(_._1.pos.point).map(p => p._1 + "\n" + (p._2 match { case LiteralImage(l) => l }) + "\n").mkString(""))
 					case _ =>
 				}
 
@@ -104,9 +104,10 @@ class ScalaSCA(val global: Global) extends Plugin {
 				}
 
 			def testIPCFG(): Unit =
-				new ShowWarnings(global, unit.source.path).apply(
-					unit.body,
-					List(new IntraProceduralControlFlowGraphGenerator(global).apply(unit.body, List())))
+				new ShowWarnings(global,
+						unit.source.path,
+						List(new IntraProceduralControlFlowGraphGenerator(global).apply(unit.body))).
+					apply(unit.body)
 
 			def testPMF(): Unit =
 				ASTRule.apply(global)(unit.body, List(new PublicMutableFields(global))) match {

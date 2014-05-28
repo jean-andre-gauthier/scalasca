@@ -2,13 +2,14 @@ package lara.epfl.scalasca.core
 
 import scala.tools.nsc._
 
-abstract class ControlFlowGraphNode(val node: Option[Global#Tree])
+abstract class Node
+abstract class ControlFlowGraphNode(val node: Option[Global#Tree]) extends Node
 case class MethodDef(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class ValueDef(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class VariableDef(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class AssignNode(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class Label(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
-case class MethodCall(val n: Global#Tree, val targetObject: Set[Global#Tree], val targetMethod: Set[Global#Tree]) extends ControlFlowGraphNode(Some(n))
+case class MethodCall(val n: Global#Tree, val targetObject: Set[Global#Symbol], val targetMethod: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class ExprNode(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class EmptyNode() extends ControlFlowGraphNode(None)
 case class CatchNode() extends ControlFlowGraphNode(None)
@@ -41,6 +42,27 @@ class ControlFlowGraph(
 
 	def withNodes(nodes: List[ControlFlowGraphNode]): ControlFlowGraph =
 		nodes.foldLeft(this)((acc, n) => acc.withNode(n))
+
+	def prevNodesOf(node: ControlFlowGraphNode): Set[ControlFlowGraphNode] =
+		nodesPrevSucc.get(node) match {
+			case Some(n) => n._1.toSet
+			case None => Set()
+	}
+
+	def nextNodesOf(node: ControlFlowGraphNode): Set[ControlFlowGraphNode] =
+		nodesPrevSucc.get(node) match {
+			case Some(n) => n._2.toSet
+			case None => Set()
+		}
+
+	def getAllNodes(): Set[ControlFlowGraphNode] =
+		nodesPrevSucc.keys.toSet
+
+	def isEntryNode(node: ControlFlowGraphNode): Boolean =
+		entryNodes.contains(node)
+
+	def isExitNode(node: ControlFlowGraphNode): Boolean =
+		exitNodes.contains(node)
 
 	override def toString(): String =
 		"Entry nodes:\n" +

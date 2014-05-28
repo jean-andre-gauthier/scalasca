@@ -5,12 +5,12 @@ import org.junit._
 class StandardTests
 //	extends BlockConstantPropagationTest
 //	with UnusedCodeRemovalTest
-//	with DoubleTripleEqualsTest
-//	with PublicMutableFieldsTest
-//	with UselessAssignmentTest
-//	with DivisionByZeroTest
-//	with EmptyFinallyTest
-	extends IntraProceduralControlFlowGraphTest
+//	extends DoubleTripleEqualsTest
+//	extends PublicMutableFieldsTest
+//	extends UselessAssignmentTest
+//	extends DivisionByZeroTest
+//	extends EmptyFinallyTest
+//	with IntraProceduralControlFlowGraphTest
 	{
 
 	//Allows eclipse to recognise class as unit test class

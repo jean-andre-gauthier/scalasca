@@ -19,7 +19,7 @@ import scala.tools.nsc._
 
 //No RuleResult associated to this Rule
 
-class ShowWarnings[T <: Global](val global: T, source: String) extends StandardRule {
+class ShowWarnings[T <: Global](val global: T, source: String, inputResults: List[RuleResult] = List()) extends StandardRule {
 
 	type TS = NoState
 	type RR = NoResult
@@ -29,12 +29,12 @@ class ShowWarnings[T <: Global](val global: T, source: String) extends StandardR
 	import global._
 
 
-	def apply(syntaxTree: Tree, computedResults: List[RuleResult]): RR = {
-		if (computedResults.forall(res => res.isSuccess))
+	def apply(syntaxTree: Tree): RR = {
+		if (inputResults.forall(res => res.isSuccess))
 			println(Console.BOLD + source + Console.RESET + " ScalaSCA " + Console.GREEN + "No errors found" + Console.RESET)
 		else {
 			println(Console.BOLD + source + Console.RESET)
-			computedResults.foreach(result => showRuleMessage(result))
+			inputResults.foreach(result => showRuleMessage(result))
 		}
 		NoResult()
 	}

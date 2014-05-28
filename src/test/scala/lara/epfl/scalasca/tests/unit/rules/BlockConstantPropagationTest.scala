@@ -33,11 +33,11 @@ trait BlockConstantPropagationTest extends BasicTest {
 
 	@Test def BCPStringAddTest: Unit = runBCPTest("BlockConstantPropagationStringAddTest")
 	@Test def BCPStringLengthTest: Unit = runBCPTest("BlockConstantPropagationStringLengthTest")
-
+//
 	@Test def BCPIfTest: Unit = runBCPTest("BlockConstantPropagationIfTest")
-
-	/**
-	 * Regression tests
-	 */
+//
+//	/**
+//	 * Regression tests
+//	 */
 	@Test def BCPReg1Test: Unit = runBCPTest("BlockConstantPropagationReg1Test")
 }

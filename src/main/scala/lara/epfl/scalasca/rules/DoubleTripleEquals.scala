@@ -35,7 +35,7 @@ case class DoubleTripleEqualsTraversalState(nodes: List[Global#Symbol]) extends 
 /**
  * This is not clean, how to make it really generic e.g. other methods than === and ==?
  */
-class DoubleTripleEquals[T <: Global, U](val global: T)(implicit tagU: TypeTag[U]) extends ASTRule {
+class DoubleTripleEquals[T <: Global, U](val global: T, inputResults: List[RuleResult] = List())(implicit tagU: TypeTag[U]) extends ASTRule {
 
 	import global._
 
@@ -51,14 +51,14 @@ class DoubleTripleEquals[T <: Global, U](val global: T)(implicit tagU: TypeTag[U
 	override def mergeStates(s1: TS, s2: TS): TS =
 			DoubleTripleEqualsTraversalState((s1.nodes ::: s2.nodes).distinct)
 
-	override def step(tree: Global#Tree, state: TS): Map[Option[Int], TS] = tree.asInstanceOf[Tree] match {
+	override def step(tree: Global#Tree, state: TS): List[(Option[TT], TS)] = tree.asInstanceOf[Tree] match {
 		case Apply(Select(a, TermName("$eq$eq$eq")), b :: Nil) if a.tpe <:< typeOf[U] && b.tpe <:< typeOf[U] =>
 			goto(Nil, DoubleTripleEqualsTraversalState(a.symbol :: state.nodes))
 		case _ =>
 			goto(tree.children, state)
 	}
 
-	override def apply(syntaxTree: Tree, computedResults: List[RuleResult] = List()): RR = {
+	override def apply(syntaxTree: Tree): RR = {
 		ASTRule.apply(global)(syntaxTree, List(this)) match {
 			case result :: rest => result match {
 				case d @ DoubleTripleEqualsNodes(_) => d

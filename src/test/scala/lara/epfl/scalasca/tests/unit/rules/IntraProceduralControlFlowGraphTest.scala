@@ -2,7 +2,7 @@ package lara.epfl.scalasca.tests.unit.rules
 
 import org.junit._
 
-class IntraProceduralControlFlowGraphTest extends BasicTest {
+trait IntraProceduralControlFlowGraphTest extends BasicTest {
 
 	def runIPCFGTest(test: String) = super.runTest("intraproceduralcontrolflowgraph", test)
 
