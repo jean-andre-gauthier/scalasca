@@ -11,6 +11,7 @@ class StandardTests
 //	extends DivisionByZeroTest
 //	extends EmptyFinallyTest
 //	with IntraProceduralControlFlowGraphTest
+	extends UnfreedResourcesTest
 	{
 
 	//Allows eclipse to recognise class as unit test class

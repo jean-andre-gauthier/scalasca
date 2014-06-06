@@ -11,12 +11,12 @@ case class IntraProceduralControlFlowGraphMap(methodCFGMap: Map[Global#Symbol, C
 		FatalCategory())
 
 	override def toString(): String =
-		if (map.size > 0)
-			map.foldLeft("")((acc, item) => acc + "Method " + item._1.name + ":\n" + item._2.toString())
+		if (methodCFGMap.size > 0)
+			methodCFGMap.foldLeft("")((acc, item) => acc + "Method " + item._1.name + ":\n" + item._2.toString())
 		else
 			warning.formattedDefaultMessage
 
-	override def isSuccess: Boolean = map.size != 0
+	override def isSuccess: Boolean = methodCFGMap.size != 0
 }
 
 class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T, inputResults: List[RuleResult] = List()) extends StandardRule {
@@ -46,11 +46,34 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T, input
 				funGraphMap(ts.currentMethod.get).withNode(newNode).withDirectedEdges(newNodePreviousNodes, newNode).withDirectedEdge(newNode, ts.currentCatch.get)
 
 		def traverse(tree: Tree, ts: TraversalState): (Option[ControlFlowGraphNode], List[ControlFlowGraphNode]) = tree match {
+
+			case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" if ts.currentMethod.isEmpty && !body.isEmpty =>
+//				println("ObjectDef")
+				val firstStatTraversal = traverse(body.head, ts)
+				val blockTraversal = body.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
+				(firstStatTraversal._1, blockTraversal._2)
+
+// Quasiquote throws weird match error in some cases?
+//			case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty && !stats.isEmpty =>
+//				println("ClassDef")
+			case ClassDef(mods, name, tparams, Template(parents, self, stats)) if ts.currentMethod.isEmpty && !stats.isEmpty =>
+				val firstStatTraversal = traverse(stats.head, ts)
+				val blockTraversal = stats.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
+				(firstStatTraversal._1, blockTraversal._2)
+
+
+			case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty && !stats.isEmpty =>
+//				println("TraitDef")
+				val firstStatTraversal = traverse(stats.head, ts)
+				val blockTraversal = stats.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
+				(firstStatTraversal._1, blockTraversal._2)
+
+
 			case m @ q"$mods def $tname[..$tparams](...$paramss): $tpt = $expr" =>
 //				println("MethodDef " + tree)
 				val currentNode = MethodDef(m)
 				funGraphMap += (m.symbol -> new ControlFlowGraph().withNode(currentNode))
-				traverse(expr, ts.copy(currentMethod = Some(m.symbol), previousNodes = List(currentNode)))
+				(Some(currentNode), traverse(expr, ts.copy(currentMethod = Some(m.symbol), previousNodes = List(currentNode)))._2)
 
 			case l @ LabelDef(name, params, rhs) if !ts.currentMethod.isEmpty =>
 //				println("LabelDef " + tree)
@@ -58,26 +81,7 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T, input
 				val newNode = Label(l)
 				funGraphMap += ts.currentMethod.get -> getUpdatedGraph(newNode, ts.previousNodes, ts)
 				labelMap += (l.symbol -> newNode)
-				traverse(rhs, ts.copy(previousNodes = List(newNode)))
-
-
-			case Apply(obj, List()) if !(ts.currentMethod.isEmpty || ts.previousNodes.isEmpty) =>
-//				println("Application " + tree)
-				if (labelMap.contains(obj.symbol)) {
-					funGraphMap += ts.currentMethod.get ->
-						funGraphMap(ts.currentMethod.get).withDirectedEdges(ts.previousNodes, labelMap(obj.symbol))
-					(None, List(labelMap(obj.symbol)))
-				}
-				else {
-					if (unseenLabelsPreviousNodes.contains(obj.symbol)) {
-						unseenLabelsPreviousNodes += obj.symbol -> (unseenLabelsPreviousNodes(obj.symbol) ::: ts.previousNodes)
-						(None, List())
-					}
-					else {
-						unseenLabelsPreviousNodes += obj.symbol -> ts.previousNodes
-						(None, List())
-					}
-				}
+				(Some(newNode), traverse(rhs, ts.copy(previousNodes = List(newNode)))._2)
 
 
 			case v @ q"$mods val $tname: $tpt = $expr" if !ts.currentMethod.isEmpty =>
@@ -107,6 +111,51 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T, input
 				val elseExitNodes = traverse(elseE, ts.copy(previousNodes = condExitNodes))._2
 				(Some(condEntryNode), thenExitNodes ::: elseExitNodes)
 
+
+			case n @ q"new { ..$earlydefns } with ..$parents { $self => ..$stats }" if !ts.currentMethod.isEmpty =>
+//				println("New")
+				val newNode = NewNode(n)
+				funGraphMap += ts.currentMethod.get -> getUpdatedGraph(newNode, ts.previousNodes, ts)
+				(Some(newNode), List(newNode))
+
+
+			case m @ q"$target.$method(...$exprss)" if !ts.currentMethod.isEmpty && exprss.size > 0 =>
+//				println("exprss " + tree)
+				val flatExprss = exprss.flatten
+				val newNode = MethodCall(m, Set(target.symbol), method)
+				val exprssTraversal =
+					if (!flatExprss.isEmpty) {
+						val firstExprssTraversal = traverse(flatExprss.head, ts)
+						if (flatExprss.size > 1)
+							flatExprss.foldLeft(firstExprssTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
+						else
+							firstExprssTraversal
+					}
+					else {
+						(Some(newNode), List(newNode))
+					}
+				funGraphMap += ts.currentMethod.get -> getUpdatedGraph(newNode, exprssTraversal._2, ts)
+				(exprssTraversal._1, List(newNode))
+
+
+			case Apply(obj, List()) if !(ts.currentMethod.isEmpty || ts.previousNodes.isEmpty) =>
+//				println("Application " + tree)
+				if (labelMap.contains(obj.symbol)) {
+					funGraphMap += ts.currentMethod.get ->
+						funGraphMap(ts.currentMethod.get).withDirectedEdges(ts.previousNodes, labelMap(obj.symbol))
+					(None, List(labelMap(obj.symbol)))
+				}
+				else {
+					if (unseenLabelsPreviousNodes.contains(obj.symbol)) {
+						unseenLabelsPreviousNodes += obj.symbol -> (unseenLabelsPreviousNodes(obj.symbol) ::: ts.previousNodes)
+						(None, List())
+					}
+					else {
+						unseenLabelsPreviousNodes += obj.symbol -> ts.previousNodes
+						(None, List())
+					}
+				}
+
 			//Quasiquote not working
 			//case q"try { $tryE } catch { case ..$catchCases } finally { $finallyE }" if !ts.currentMethod.isEmpty =>
 			case Try(tryE, catchCases, finallyE) if !ts.currentMethod.isEmpty =>
@@ -129,51 +178,6 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T, input
 					case _ if !catchExitNodes.isEmpty => (Some(tryEntryNode), tryExitNodes ::: catchExitNodes)
 					case _ => (Some(tryEntryNode), tryExitNodes)
 				}
-
-
-			case q"$mods object $tname extends { ..$early } with ..$parents { $self => ..$body }" if ts.currentMethod.isEmpty && !body.isEmpty =>
-//				println("ObjectDef")
-				val firstStatTraversal = traverse(body.head, ts)
-				val blockTraversal = body.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
-				(firstStatTraversal._1, blockTraversal._2)
-
-
-			case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty && !stats.isEmpty =>
-//				println("ClassDef")
-				val firstStatTraversal = traverse(stats.head, ts)
-				val blockTraversal = stats.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
-				(firstStatTraversal._1, blockTraversal._2)
-
-
-			case q"$mods trait $tpname[..$tparams] extends { ..$earlydefns } with ..$parents { $self => ..$stats }" if ts.currentMethod.isEmpty && !stats.isEmpty =>
-//				println("TraitDef")
-				val firstStatTraversal = traverse(stats.head, ts)
-				val blockTraversal = stats.tail.foldLeft(firstStatTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
-				(firstStatTraversal._1, blockTraversal._2)
-
-
-			case m @ q"$expr(...$exprss)" if !ts.currentMethod.isEmpty && exprss.size > 0 =>
-//				println("exprss " + tree)
-				val flatExprss = exprss.flatten
-				val newNode = expr match {
-					case "$target.$method" =>
-						MethodCall(m, Set(target.symbol), expr)
-					case _ =>
-						MethodCall(m, Set(), expr)
-				}
-				val exprssTraversal =
-					if (!flatExprss.isEmpty) {
-						val firstExprssTraversal = traverse(flatExprss.head, ts)
-						if (flatExprss.size > 1)
-							flatExprss.foldLeft(firstExprssTraversal)((prevTraversal, stat) => traverse(stat, ts.copy(previousNodes = prevTraversal._2)))
-						else
-							firstExprssTraversal
-					}
-					else {
-						(Some(newNode), List(newNode))
-					}
-				funGraphMap += ts.currentMethod.get -> getUpdatedGraph(newNode, exprssTraversal._2, ts)
-				(exprssTraversal._1, List(newNode))
 
 
 			case q"return $expr" if !ts.currentMethod.isEmpty =>
@@ -214,6 +218,7 @@ class IntraProceduralControlFlowGraphGenerator[T <: Global](val global: T, input
 
 
 			case a @ q"$expr1 = $expr2" if !ts.currentMethod.isEmpty =>
+//				println("expr1 = expr2")
 				val expr2Traversal = traverse(expr2, ts)
 				val expr1Traversal = traverse(expr1, ts.copy(previousNodes = expr2Traversal._2))
 				val newNode = AssignNode(a)

@@ -54,7 +54,9 @@ class BlockConstantPropagation[T <: Global](val global: T, inputResults: List[Ru
 				case q"package $ref { ..$stats }" =>
 					goto(stats, state)
 				//Ignores class fields
-				case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" => {
+// Quasiquote throws weird match error in some cases?
+//				case q"$mods class $tpname[..$targs] $ctorMods(...$paramss) extends { ..$early } with ..$parents { $self => ..$stats }" => {
+				case ClassDef(mods, name, tparams, Template(parents, self, stats)) => {
 					goto(stats, state, stat => stat match {
 						case q"$mods def $tname[..$targs](...$paramss): $tpt = $expr" => true
 						case _ => false})

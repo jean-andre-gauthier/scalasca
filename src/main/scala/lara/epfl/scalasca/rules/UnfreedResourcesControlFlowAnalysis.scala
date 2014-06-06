@@ -28,10 +28,10 @@ case class UnfreedResources(unfreedResources: Set[ControlFlowGraphNode]) extends
  *
  * Flags any call to openMethodName for which there exists at least one execution path where closeMethodName is not called.
  *
- * TODO allow type specification
+ * TODO allow type specification for objects on which the methods are called
  *
  */
-class UnfreedResourcesControlFlowAnalysis[T <: Global](val global: T, computedResults: List[RuleResult], _openMethodName: T#Tree, _closeMethodName: T#Ident) extends Rule {
+class UnfreedResourcesControlFlowAnalysis[T <: Global](val global: T, _openMethodName: Global#TermName, _closeMethodName: Global#TermName, computedResults: List[RuleResult]) extends Rule {
 
 	import global._
 
@@ -39,8 +39,8 @@ class UnfreedResourcesControlFlowAnalysis[T <: Global](val global: T, computedRe
 
 	override val ruleName: String = "MEM_MISSING_RESOURCE_CLOSING"
 
-	private val openMethodName = _openMethodName.asInstanceOf[global.Tree]
-	private val closeMethodName = _closeMethodName.asInstanceOf[global.Tree]
+	private val openMethodName = _openMethodName.asInstanceOf[global.TermName]
+	private val closeMethodName = _closeMethodName.asInstanceOf[global.TermName]
 
 	private val cfgResults: List[IntraProceduralControlFlowGraphMap] =
 		computedResults.partition(_.isInstanceOf[IntraProceduralControlFlowGraphMap])._1.asInstanceOf[List[IntraProceduralControlFlowGraphMap]]
@@ -52,7 +52,7 @@ class UnfreedResourcesControlFlowAnalysis[T <: Global](val global: T, computedRe
 
 	private def getEquation(cfg: ControlFlowGraph): DataflowEquation = {
 
-		val resourcesMap = scala.collection.mutable.Map[Global#Symbol, ControlFlowGraphNode]()
+//		println(cfg)
 		val allNodes = cfg.getAllNodes()
 		val equationMap = allNodes.zipWithIndex.foldLeft(Map[ControlFlowGraphNode, (Array[EquationVariable] => Set[ControlFlowGraphNode], Set[ControlFlowGraphNode])]())((acc, tuple) => {
 
@@ -61,9 +61,8 @@ class UnfreedResourcesControlFlowAnalysis[T <: Global](val global: T, computedRe
 
 			acc + (cfgNode match {
 				//Resource opening
-				case MethodCall(_, targets, m) if m.asInstanceOf[global.Tree].equalsStructure(openMethodName) && targets.size == 1 =>
+				case MethodCall(_, targets, m) if m.asInstanceOf[global.TermName] == openMethodName && targets.size == 1 =>
 					val target = targets.toList.head
-					resourcesMap += (target -> cfgNode)
 
 					(cfgNode, ((args: Array[EquationVariable]) => {
 						val argsPreviousNodes = args.filter(arg => previousNodes.contains(arg.variable))
@@ -73,17 +72,18 @@ class UnfreedResourcesControlFlowAnalysis[T <: Global](val global: T, computedRe
 							argsPreviousNodes.foldLeft(Set[ControlFlowGraphNode]())((acc, a) => acc ++ a.latticeElement.set) + cfgNode
 					}, previousNodes))
 				//Resource closing
-				case MethodCall(_, targets, m) if m.asInstanceOf[global.Tree].equalsStructure(closeMethodName) && targets.size == 1 && resourcesMap.contains(targets.toList.head) =>
+				case MethodCall(_, targets, m) if m.asInstanceOf[global.TermName] == closeMethodName && targets.size == 1 =>
 					val target = targets.toList.head
-					val openingNode = resourcesMap(target)
-					resourcesMap -= target
 
 					(cfgNode, ((args: Array[EquationVariable]) => {
 						val argsPreviousNodes = args.filter(arg => previousNodes.contains(arg.variable))
 						if (argsPreviousNodes.isEmpty)
 							Set[ControlFlowGraphNode]()
 						else
-							argsPreviousNodes.foldLeft(Set[ControlFlowGraphNode]())((acc, a) => acc ++ a.latticeElement.set) - cfgNode
+							argsPreviousNodes.foldLeft(Set[ControlFlowGraphNode]())((acc, a) => acc ++ a.latticeElement.set).filter(_.node match {
+								case Some(n) => n != target
+								case None => true
+							})
 					}, previousNodes))
 				//All other cases
 				case _ =>
@@ -96,6 +96,7 @@ class UnfreedResourcesControlFlowAnalysis[T <: Global](val global: T, computedRe
 					}, previousNodes))
 			})
 		})
+
 		new DataflowEquation(equationMap)
 	}
 

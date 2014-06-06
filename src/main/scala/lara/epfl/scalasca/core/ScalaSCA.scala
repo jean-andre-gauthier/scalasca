@@ -26,6 +26,7 @@ import lara.epfl.scalasca.rules._
 import scala.actors.Actor
 import java.io.File
 import java.net.URLClassLoader
+import scala.io.Source
 
 
 class ScalaSCA(val global: Global) extends Plugin {
@@ -73,6 +74,7 @@ class ScalaSCA(val global: Global) extends Plugin {
 				case "emptyfinally" => testEF()
 				case "intraproceduralcontrolflowgraph" => testIPCFG()
 				case "publicmutablefields" => testPMF()
+				case "unfreedresources" => testUR()
 				case "unusedcoderemoval" => testUCR()
 				case "uselessassignment" => testUA()
 				case _ =>
@@ -127,6 +129,12 @@ class ScalaSCA(val global: Global) extends Plugin {
 					case _ =>
 				}
 
+			def testUR(): Unit =
+				new ShowWarnings(global,
+						unit.source.path,
+						List(new UnfreedResourcesControlFlowAnalysis(global, TermName("openResource"), TermName("closeResource"), List(new IntraProceduralControlFlowGraphGenerator(global).apply(unit.body))).apply(unit.body))).
+					apply(unit.body)
+
 			def printNodes(nodes: List[Global#Position]): Unit =
 				println(nodes.map(p => p.lineContent+"\n"+p.lineCaret+"\n"+p.line+" "+p.column+"\n").mkString(""))
 
@@ -152,29 +160,10 @@ class ScalaSCA(val global: Global) extends Plugin {
 		for (option <- options) {
 			if (option.startsWith("testRule:")) {
 				testRule = option.substring(9)
-			} else if (option.startsWith("d:") || option.startsWith("f:")) {
-				val personalRules =
-					if (option.startsWith("d:")) {
-						val directory = new File(option.substring(2))
-						if (directory.isDirectory())
-							directory.listFiles().filter(_.getName.endsWith(".jar")).flatMap(f => loadRules(f)).toList
-						else {
-							error("Argument for d: is not a directory: " + directory.getName())
-							List[Rule]()
-						}
-					}
-					else if (option.startsWith("f:")) {
-						val file = new File(option.substring(2))
-						if (file.isFile())
-							loadRules(file)
-						else {
-							error("Argument for d: is not a file: " + file.getName())
-							List[Rule]()
-						}
-					}
-					else
-						List[Rule]()
-				rules = personalRules
+			} else if (option.startsWith("c:")) {
+				rules = Source.fromFile(option.substring(2)).getLines.flatMap(plugin => {
+					loadRules(new File(plugin))
+				}).toList
 			}
 			else {
 				error("Option not understood: " + option)

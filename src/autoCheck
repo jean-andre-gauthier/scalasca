@@ -5,4 +5,4 @@ if [ -d ../bin/classes ]; then
 fi
 mkdir ../bin/classes
 
-scalac -Xplugin:"../target/scala-2.11/scalasca_2.11-0.1.jar" -d ../bin/classes -classpath "/Applications/eclipse/plugins/org.junit_4.11.0.v201303080030/junit.jar" main/scala/lara/epfl/scalasca/core/*.scala main/scala/lara/epfl/scalasca/rules/*.scala test/scala/lara/epfl/scalasca/tests/unit/rules/*.scala
+scalac -Xplugin:"../target/scala-2.11/scalasca_2.11-0.1-SNAPSHOT.jar" -P:scalasca:c:autoCheck.plugins -d ../bin/classes -classpath "/Applications/eclipse/plugins/org.junit_4.11.0.v201303080030/junit.jar" main/scala/lara/epfl/scalasca/core/*.scala main/scala/lara/epfl/scalasca/rules/*.scala test/scala/lara/epfl/scalasca/tests/unit/rules/*.scala

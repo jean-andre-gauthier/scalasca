@@ -2,9 +2,11 @@ name := "ScalaSCA"
 
 organization := "lara.epfl"
 
-version := "0.1"
+autoCompilerPlugins := true
 
-scalaVersion := "2.11.0"
+version := "0.1-SNAPSHOT"
+
+scalaVersion := "2.11.1"
 
 mainClass in (Compile, run) := Some("scalasca.core.ScalaSCA")
 
@@ -18,12 +20,9 @@ libraryDependencies ++= Seq(
 	"org.scala-sbt" % "test-interface" % "1.0"
 )
 
-scalacOptions += "-Xplugin:scalasca_2.11-0.1.jar"
+//addCompilerPlugin("lara.epfl" %% "scalasca" % "0.1-SNAPSHOT")
 
-lazy val buildSettings = Seq(
-	version := "0.1-SNAPSHOT",
-	scalaVersion := "2.11.0"
-)
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xplugin:../ScalaSCA/scalasca_2.11-0.1-SNAPSHOT.jar")
 
 mappings in (Compile, packageBin) <+= baseDirectory map { base =>
 	(base / "src" / "scalac-plugin.xml") -> "scalac-plugin.xml"

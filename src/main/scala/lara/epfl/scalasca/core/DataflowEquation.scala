@@ -33,21 +33,23 @@ class DataflowEquation(equationFunctions:
 
 	private def solutionProcessing(): Map[ControlFlowGraphNode, EquationVariable] = {
 			val (boxedVars, functionMap, dependenceMap) = boxedInput()
-			val xArray = boxedVars.to[scala.collection.mutable.ArrayBuffer[EquationVariable]]
-			val qList = boxedVars.to[scala.collection.mutable.ListBuffer[EquationVariable]]
+			val xArray = boxedVars.to[scala.collection.mutable.ArrayBuffer]
+			val qList = boxedVars.to[scala.collection.mutable.ListBuffer]
 			while (!qList.isEmpty) {
 				val qi = qList.head
 				val y = functionMap(qi)(xArray.toArray)
 				qList.remove(0)
 				if (y != xArray(qi.latticeElement.index)) {
 					qList.append(dependenceMap(qi).toSeq:_*)
-					xArray(index) = y
+					xArray(qi.latticeElement.index) = y
 				}
+				println(xArray)
 			}
 			xArray.map(x => (x.variable, x)).toMap
 	}
 
 	def solve(iterationTimeLimit: Int = 5000): Option[Map[ControlFlowGraphNode, EquationVariable]] = {
+
 		val solution = Future {
 			solutionProcessing()
 		}

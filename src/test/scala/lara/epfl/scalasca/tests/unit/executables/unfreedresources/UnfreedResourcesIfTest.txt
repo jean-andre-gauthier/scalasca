@@ -1,0 +1,3 @@
+package lara.epfl.scalasca.test.unit.executable.unfreedresources
+
+import scala.util.Random

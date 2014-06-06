@@ -9,7 +9,8 @@ case class ValueDef(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class VariableDef(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class AssignNode(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class Label(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
-case class MethodCall(val n: Global#Tree, val targetObject: Set[Global#Symbol], val targetMethod: Global#Tree) extends ControlFlowGraphNode(Some(n))
+case class MethodCall(val n: Global#Tree, val targetObject: Set[Global#Symbol], val targetMethod: Global#TermName) extends ControlFlowGraphNode(Some(n))
+case class NewNode(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class ExprNode(val n: Global#Tree) extends ControlFlowGraphNode(Some(n))
 case class EmptyNode() extends ControlFlowGraphNode(None)
 case class CatchNode() extends ControlFlowGraphNode(None)
@@ -21,7 +22,7 @@ class ControlFlowGraph(
 	val exitNodes: collection.mutable.LinkedHashSet[ControlFlowGraphNode] = collection.mutable.LinkedHashSet()) {
 
 	def withDirectedEdge(from: ControlFlowGraphNode, to: ControlFlowGraphNode): ControlFlowGraph = {
-		assert(nodesPrevSucc.contains(from) && nodesPrevSucc.contains(to))
+//		assert(nodesPrevSucc.contains(from) && nodesPrevSucc.contains(to))
 		if (nodesPrevSucc.contains(from) && nodesPrevSucc.contains(to))
 			new ControlFlowGraph(
 					nodesPrevSucc + (from -> (nodesPrevSucc(from)._1, nodesPrevSucc(from)._2 + to), to -> (nodesPrevSucc(to)._1 + from, nodesPrevSucc(to)._2)),
